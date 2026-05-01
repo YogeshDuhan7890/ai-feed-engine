@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+	<meta charset="UTF-8">
+
+	<title>AI Feed</title>
+
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+
+</head>
+
+<body>
+
+	<!-- HEADER -->
+
+	<div th:replace="~{components/header :: header}"></div>
+
+
+	<!-- MAIN CONTENT -->
+
+	<main class="container">
+
+		<div th:insert="${content}"></div>
+
+	</main>
+
+
+	<!-- FOOTER -->
+
+	<div th:replace="components/footer :: footer"></div>
+
+
+	<!-- JS -->
+
+	<script th:src="@{/js/header.js}"></script>
+	<script th:src="@{/js/blockReport.js}"></script>
+
+</body>
+
+</html>

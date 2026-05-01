@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Analytics | AI Feed</title>
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		html,
+		body {
+			background: #07070f;
+			color: #f1f1f8;
+			font-family: 'DM Sans', 'Segoe UI', sans-serif;
+			margin: 0
+		}
+
+		.page {
+			max-width: 980px;
+			margin: 0 auto;
+			padding: 80px 20px 120px
+		}
+
+		/* Header */
+		.page-hdr {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-bottom: 28px
+		}
+
+		.page-hdr h1 {
+			font-size: 1.4rem;
+			font-weight: 800;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin: 0
+		}
+
+		.page-hdr p {
+			color: #6b7280;
+			font-size: .82rem;
+			margin: 4px 0 0
+		}
+
+		.export-btn {
+			background: rgba(99, 102, 241, .1);
+			border: 1px solid rgba(99, 102, 241, .25);
+			color: #818cf8;
+			padding: 7px 16px;
+			border-radius: 20px;
+			font-size: .78rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all .2s
+		}
+
+		.export-btn:hover {
+			background: rgba(99, 102, 241, .2)
+		}
+
+		/* Period tabs */
+		.period-row {
+			display: flex;
+			gap: 8px;
+			margin-bottom: 22px
+		}
+
+		.period-btn {
+			background: rgba(255, 255, 255, .06);
+			border: 1px solid rgba(255, 255, 255, .1);
+			color: #9ca3af;
+			padding: 6px 16px;
+			border-radius: 20px;
+			font-size: .78rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all .2s
+		}
+
+		.period-btn.active {
+			background: #6366f1;
+			border-color: #6366f1;
+			color: #fff
+		}
+
+		/* Stat cards */
+		.stats-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+			gap: 12px;
+			margin-bottom: 22px
+		}
+
+		.stat-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 14px;
+			padding: 16px 14px;
+			transition: border-color .2s, transform .2s;
+			cursor: default
+		}
+
+		.stat-card:hover {
+			border-color: rgba(99, 102, 241, .3);
+			transform: translateY(-2px)
+		}
+
+		.sc-icon {
+			font-size: 1.3rem;
+			margin-bottom: 8px
+		}
+
+		.sc-val {
+			font-size: 1.5rem;
+			font-weight: 800;
+			color: #f1f1f8;
+			margin-bottom: 3px;
+			line-height: 1
+		}
+
+		.sc-lbl {
+			font-size: .7rem;
+			color: #6b7280;
+			font-weight: 500;
+			text-transform: uppercase;
+			letter-spacing: .4px
+		}
+
+		.sc-change {
+			font-size: .72rem;
+			margin-top: 4px;
+			font-weight: 600
+		}
+
+		.sc-change.up {
+			color: #34d399
+		}
+
+		.sc-change.down {
+			color: #f87171
+		}
+
+		.stat-card.indigo .sc-val {
+			color: #818cf8
+		}
+
+		.stat-card.pink .sc-val {
+			color: #f472b6
+		}
+
+		.stat-card.green .sc-val {
+			color: #34d399
+		}
+
+		.stat-card.yellow .sc-val {
+			color: #fbbf24
+		}
+
+		.stat-card.blue .sc-val {
+			color: #60a5fa
+		}
+
+		.stat-card.orange .sc-val {
+			color: #fb923c
+		}
+
+		.stat-card.purple .sc-val {
+			color: #c084fc
+		}
+
+		/* Chart cards */
+		.chart-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 16px;
+			margin-bottom: 16px
+		}
+
+		@media(max-width:680px) {
+			.chart-row {
+				grid-template-columns: 1fr
+			}
+		}
+
+		.chart-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 14px;
+			padding: 18px
+		}
+
+		.chart-card.full {
+			grid-column: 1/-1
+		}
+
+		.chart-card h2 {
+			font-size: .85rem;
+			font-weight: 700;
+			color: #f1f1f8;
+			margin: 0 0 16px;
+			display: flex;
+			align-items: center;
+			gap: 8px
+		}
+
+		canvas {
+			max-height: 220px
+		}
+
+		/* Video table */
+		.video-table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: .82rem
+		}
+
+		.video-table th {
+			color: #6b7280;
+			font-weight: 600;
+			text-align: left;
+			padding: 10px 12px;
+			border-bottom: 1px solid rgba(255, 255, 255, .07);
+			font-size: .72rem;
+			text-transform: uppercase;
+			letter-spacing: .4px
+		}
+
+		.video-table td {
+			padding: 10px 12px;
+			border-bottom: 1px solid rgba(255, 255, 255, .04);
+			vertical-align: middle
+		}
+
+		.video-table tr:hover td {
+			background: rgba(255, 255, 255, .02)
+		}
+
+		.vt-thumb {
+			width: 42px;
+			height: 42px;
+			border-radius: 8px;
+			background: #1a1a2e;
+			overflow: hidden;
+			flex-shrink: 0
+		}
+
+		.vt-thumb video {
+			width: 100%;
+			height: 100%;
+			object-fit: cover
+		}
+
+		.vt-caption {
+			font-weight: 600;
+			color: #e5e7eb;
+			max-width: 200px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap
+		}
+
+		.vt-date {
+			color: #6b7280;
+			font-size: .72rem
+		}
+
+		.eng-bar-wrap {
+			display: flex;
+			align-items: center;
+			gap: 8px
+		}
+
+		.eng-bar {
+			height: 6px;
+			border-radius: 3px;
+			background: #6366f1;
+			min-width: 4px
+		}
+
+		.eng-val {
+			color: #a5b4fc;
+			font-size: .78rem;
+			font-weight: 600
+		}
+
+		/* Loading */
+		.loading-state {
+			text-align: center;
+			padding: 60px 20px;
+			color: #4b5563
+		}
+
+		.spin {
+			width: 34px;
+			height: 34px;
+			border: 3px solid #1a1a2e;
+			border-top-color: #6366f1;
+			border-radius: 50%;
+			animation: spin .8s linear infinite;
+			margin: 0 auto 12px
+		}
+
+		@keyframes spin {
+			to {
+				transform: rotate(360deg)
+			}
+		}
+
+		.error-state {
+			text-align: center;
+			padding: 60px 20px;
+			color: #f87171
+		}
+
+		/* Insight cards */
+		.insight-row {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+			gap: 12px;
+			margin-bottom: 16px
+		}
+
+		.insight-card {
+			background: linear-gradient(135deg, rgba(99, 102, 241, .08), rgba(139, 92, 246, .05));
+			border: 1px solid rgba(99, 102, 241, .15);
+			border-radius: 14px;
+			padding: 16px
+		}
+
+		.insight-title {
+			font-size: .78rem;
+			font-weight: 700;
+			color: #a5b4fc;
+			margin-bottom: 6px
+		}
+
+		.insight-val {
+			font-size: 1.1rem;
+			font-weight: 800;
+			color: #f1f1f8
+		}
+
+		.insight-sub {
+			font-size: .72rem;
+			color: #6b7280;
+			margin-top: 3px
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="page">
+		<div class="page-hdr">
+			<div>
+				<h1>📊 Creator Analytics</h1>
+				<p>Apni content ki performance dekho</p>
+			</div>
+			<button class="export-btn" onclick="exportCSV()">↓ Export CSV</button>
+		</div>
+
+		<!-- Loading -->
+		<div id="loadingState">
+			<div class="loading-state">
+				<div class="spin"></div>
+				<p>Analytics load ho raha hai...</p>
+			</div>
+		</div>
+
+		<!-- Content -->
+		<div id="analyticsContent" style="display:none">
+
+			<!-- Stat cards -->
+			<div class="stats-grid" id="statsGrid"></div>
+
+			<!-- Insights -->
+			<div class="insight-row" id="insightRow"></div>
+
+			<!-- Charts row 1 -->
+			<div class="chart-row">
+				<div class="chart-card full">
+					<h2>📈 Last 7 Days Engagement</h2>
+					<canvas id="engChart"></canvas>
+				</div>
+			</div>
+
+			<!-- Charts row 2 -->
+			<div class="chart-row">
+				<div class="chart-card">
+					<h2>👥 Follower Growth (30 days)</h2>
+					<canvas id="followerChart"></canvas>
+				</div>
+				<div class="chart-card">
+					<h2>🎯 Engagement Breakdown</h2>
+					<canvas id="breakdownChart"></canvas>
+				</div>
+			</div>
+
+			<!-- Video performance table -->
+			<div class="chart-card" style="margin-bottom:16px">
+				<h2>🎬 Video Performance</h2>
+				<div style="overflow-x:auto">
+					<table class="video-table" id="videoTable">
+						<thead>
+							<tr>
+								<th>#</th>
+								<th>Video</th>
+								<th>❤️ Likes</th>
+								<th>💬 Comments</th>
+								<th>🔖 Saves</th>
+								<th>↗️ Shares</th>
+								<th>Score</th>
+								<th>Date</th>
+							</tr>
+						</thead>
+						<tbody id="videoTableBody"></tbody>
+					</table>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- Error -->
+		<div id="errorState" style="display:none" class="error-state">
+			<div style="font-size:2rem;margin-bottom:10px">⚠️</div>
+			<p id="errorMsg">Analytics load nahi hua</p>
+			<button onclick="loadAll()" style="margin-top:12px;background:#6366f1;border:none;color:#fff;
+				padding:8px 20px;border-radius:20px;cursor:pointer;font-size:.82rem">Retry</button>
+		</div>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+	<script th:inline="none">
+		let dashData = null, followerData = null, videoData = null
+		let charts = {}
+
+		async function loadAll() {
+			show('loadingState'); hide('analyticsContent'); hide('errorState')
+			try {
+				const [dash, followers, videos] = await Promise.all([
+					fetch('/api/analytics/dashboard').then(r => r.json()),
+					fetch('/api/analytics/follower-growth').then(r => r.json()),
+					fetch('/api/analytics/videos').then(r => r.json()),
+				])
+				dashData = dash; followerData = followers; videoData = videos
+
+				hide('loadingState'); show('analyticsContent')
+
+				renderStats(dash.overview)
+				renderInsights(dash, videoData)
+				renderEngChart(dash.engagementTrend)
+				renderFollowerChart(followerData)
+				renderBreakdownChart(dash.overview)
+				renderVideoTable(videoData)
+			} catch (e) {
+				hide('loadingState'); show('errorState')
+				document.getElementById('errorMsg').textContent = 'Error: ' + e.message
+			}
+		}
+
+		function renderStats(ov) {
+			if (!ov) return
+			const items = [
+				{icon: '🎬', val: ov.totalVideos, lbl: 'Videos', cls: 'indigo'},
+				{icon: '👥', val: ov.totalFollowers, lbl: 'Followers', cls: 'pink'},
+				{icon: '❤️', val: ov.totalLikes, lbl: 'Likes', cls: 'green'},
+				{icon: '💬', val: ov.totalComments, lbl: 'Comments', cls: 'yellow'},
+				{icon: '🔖', val: ov.totalBookmarks, lbl: 'Saves', cls: 'blue'},
+				{icon: '↗️', val: ov.totalShares || 0, lbl: 'Shares', cls: 'purple'},
+				{icon: '📈', val: ov.engagementRate || '0%', lbl: 'Eng. Rate', cls: 'orange'},
+			]
+			document.getElementById('statsGrid').innerHTML = items.map(i => `
+				<div class="stat-card ${i.cls}">
+					<div class="sc-icon">${i.icon}</div>
+					<div class="sc-val">${fmt(i.val)}</div>
+					<div class="sc-lbl">${i.lbl}</div>
+				</div>`).join('')
+		}
+
+		function renderInsights(dash, videos) {
+			const ov = dash?.overview || {}
+			const topVideo = videos?.length ? videos[0] : null
+			const avgEng = ov.totalVideos > 0
+				? Math.round((ov.totalLikes + ov.totalComments) / ov.totalVideos)
+				: 0
+
+			const insights = [
+				{
+					title: '🏆 Best Performing Video',
+					val: topVideo ? `Score: ${fmt(topVideo.engagementScore)}` : 'No videos yet',
+					sub: topVideo?.caption?.substring(0, 40) || ''
+				},
+				{
+					title: '💡 Avg Engagement per Video',
+					val: fmt(avgEng),
+					sub: 'likes + comments per video'
+				},
+				{
+					title: '📊 Follower Ratio',
+					val: ov.totalFollowers > 0 ? (ov.totalFollowing / ov.totalFollowers).toFixed(2) : '0',
+					sub: `${fmt(ov.totalFollowing)} following / ${fmt(ov.totalFollowers)} followers`
+				},
+			]
+			document.getElementById('insightRow').innerHTML = insights.map(i => `
+				<div class="insight-card">
+					<div class="insight-title">${i.title}</div>
+					<div class="insight-val">${i.val}</div>
+					<div class="insight-sub">${i.sub}</div>
+				</div>`).join('')
+		}
+
+		function renderEngChart(trend) {
+			const ctx = document.getElementById('engChart')
+			if (!ctx) return
+			if (charts.eng) charts.eng.destroy()
+			charts.eng = new Chart(ctx, {
+				type: 'line',
+				data: {
+					labels: trend?.map(d => d.date) || [],
+					datasets: [{
+						label: 'Engagements',
+						data: trend?.map(d => d.count) || [],
+						borderColor: '#6366f1',
+						backgroundColor: 'rgba(99,102,241,0.1)',
+						fill: true, tension: 0.4,
+						pointBackgroundColor: '#6366f1', pointRadius: 4, borderWidth: 2
+					}]
+				},
+				options: chartOpts('Engagements')
+			})
+		}
+
+		function renderFollowerChart(data) {
+			const ctx = document.getElementById('followerChart')
+			if (!ctx) return
+			if (charts.follower) charts.follower.destroy()
+			charts.follower = new Chart(ctx, {
+				type: 'bar',
+				data: {
+					labels: data?.map(d => d.date?.slice(5)) || [],
+					datasets: [{
+						label: 'New Followers',
+						data: data?.map(d => d.count) || [],
+						backgroundColor: 'rgba(244,114,182,0.6)',
+						borderColor: '#f472b6', borderWidth: 1, borderRadius: 4
+					}]
+				},
+				options: chartOpts('New Followers')
+			})
+		}
+
+		function renderBreakdownChart(ov) {
+			const ctx = document.getElementById('breakdownChart')
+			if (!ctx || !ov) return
+			if (charts.breakdown) charts.breakdown.destroy()
+			charts.breakdown = new Chart(ctx, {
+				type: 'doughnut',
+				data: {
+					labels: ['Likes', 'Comments', 'Saves', 'Shares'],
+					datasets: [{
+						data: [ov.totalLikes || 0, ov.totalComments || 0, ov.totalBookmarks || 0, ov.totalShares || 0],
+						backgroundColor: ['#818cf8', '#fbbf24', '#34d399', '#fb923c'],
+						borderWidth: 0
+					}]
+				},
+				options: {
+					responsive: true,
+					plugins: {
+						legend: {position: 'bottom', labels: {color: '#9ca3af', font: {size: 11}}}
+					}
+				}
+			})
+		}
+
+		function renderVideoTable(videos) {
+			const tbody = document.getElementById('videoTableBody')
+			if (!tbody) return
+			if (!videos?.length) {
+				tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#4b5563;padding:24px">Koi video nahi</td></tr>'
+				return
+			}
+			const maxScore = Math.max(...videos.map(v => v.engagementScore || 0), 1)
+			tbody.innerHTML = videos.map((v, i) => `
+				<tr>
+					<td style="color:#6366f1;font-weight:700">#${i + 1}</td>
+					<td>
+						<div style="display:flex;align-items:center;gap:10px">
+							<div class="vt-thumb">
+								${v.videoUrl ? `<video src="${v.videoUrl}" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>` : '🎬'}
+							</div>
+							<div>
+								<div class="vt-caption">${v.caption || 'Untitled'}</div>
+								<div class="vt-date">${v.createdAt ? new Date(v.createdAt).toLocaleDateString('hi-IN') : ''}</div>
+							</div>
+						</div>
+					</td>
+					<td style="color:#818cf8;font-weight:600">${fmt(v.likes)}</td>
+					<td style="color:#fbbf24;font-weight:600">${fmt(v.comments)}</td>
+					<td style="color:#34d399;font-weight:600">${fmt(v.saves)}</td>
+					<td style="color:#fb923c;font-weight:600">${fmt(v.shares)}</td>
+					<td>
+						<div class="eng-bar-wrap">
+							<div class="eng-bar" style="width:${Math.round((v.engagementScore / maxScore) * 80)}px"></div>
+							<span class="eng-val">${fmt(v.engagementScore)}</span>
+						</div>
+					</td>
+					<td style="color:#6b7280;font-size:.72rem">${v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}</td>
+				</tr>`).join('')
+		}
+
+		function chartOpts(label) {
+			return {
+				responsive: true,
+				plugins: {legend: {display: false}},
+				scales: {
+					x: {ticks: {color: '#6b7280', font: {size: 10}}, grid: {color: 'rgba(255,255,255,0.04)'}},
+					y: {ticks: {color: '#6b7280', font: {size: 10}}, grid: {color: 'rgba(255,255,255,0.04)'}}
+				}
+			}
+		}
+
+		function fmt(n) {
+			if (n == null) return '0'
+			if (typeof n === 'string') return n
+			if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
+			if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
+			return String(n)
+		}
+
+		function exportCSV() {
+			if (!dashData?.overview) {alert('Pehle analytics load karo'); return }
+			const ov = dashData.overview
+			const rows = [
+				['Metric', 'Value'],
+				['Videos', ov.totalVideos],
+				['Followers', ov.totalFollowers],
+				['Total Likes', ov.totalLikes],
+				['Comments', ov.totalComments],
+				['Saves', ov.totalBookmarks],
+				['Shares', ov.totalShares || 0],
+				['Engagement Rate', ov.engagementRate],
+				['', ''],
+				['Video Performance', ''],
+				['Rank', 'Caption', 'Likes', 'Comments', 'Saves', 'Shares', 'Score'],
+				...(videoData || []).map((v, i) => [i + 1, v.caption || '', v.likes, v.comments, v.saves || 0, v.shares || 0, v.engagementScore])
+			]
+			const csv = rows.map(r => r.join(',')).join('\n')
+			const a = document.createElement('a')
+			a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}))
+			a.download = 'creator-analytics.csv'
+			a.click()
+		}
+
+		function show(id) {document.getElementById(id).style.display = 'block'}
+		function hide(id) {document.getElementById(id).style.display = 'none'}
+
+		loadAll()
+	</script>
+</body>
+
+</html>

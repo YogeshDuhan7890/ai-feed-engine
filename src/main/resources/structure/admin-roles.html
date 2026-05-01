@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Role Management - AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+	<style>
+		.role-badge {
+			font-size: 0.75rem;
+			padding: 4px 10px;
+			border-radius: 12px;
+			font-weight: 700;
+			letter-spacing: 0.3px;
+		}
+
+		.role-ADMIN { background: #fce7f3; color: #be185d; }
+		.role-USER { background: #f3f4f6; color: #374151; }
+
+		.perm-card {
+			border-radius: 12px;
+			border: 2px solid #f0f0ff;
+			padding: 16px;
+		}
+
+		.perm-card h6 {
+			font-weight: 700;
+			margin-bottom: 10px;
+		}
+
+		.perm-item {
+			font-size: 0.8rem;
+			padding: 3px 0;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.perm-yes { color: #22c55e; }
+		.perm-no { color: #ef4444; }
+
+		.changelog-item {
+			border-left: 3px solid #6c63ff;
+			padding: 8px 12px;
+			margin-bottom: 6px;
+			background: #f8f8ff;
+			border-radius: 0 8px 8px 0;
+			font-size: 0.82rem;
+		}
+
+		.avatar-sm {
+			width: 32px;
+			height: 32px;
+			border-radius: 50%;
+			object-fit: cover;
+		}
+
+		.avatar-placeholder {
+			width: 32px;
+			height: 32px;
+			border-radius: 50%;
+			background: #e0e0ff;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 0.8rem;
+			font-weight: 700;
+		}
+
+		#userSearch {
+			max-width: 260px;
+		}
+
+		.stat-pill {
+			background: #f0f0ff;
+			color: #6c63ff;
+			border-radius: 20px;
+			padding: 6px 14px;
+			font-weight: 700;
+			font-size: 0.85rem;
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='roles')}"></div>
+
+	<div class="main-content">
+		<div class="d-flex align-items-center justify-content-between mb-4">
+			<div>
+				<h4 class="mb-0">Role Management</h4>
+				<small class="text-muted">Users ko Admin ya User role assign karo.</small>
+			</div>
+			<div class="d-flex gap-2" id="roleStatsPills">
+				<span class="stat-pill" id="statAdmin">- Admin</span>
+				<span class="stat-pill" id="statUser">- User</span>
+			</div>
+		</div>
+
+		<div class="row g-4">
+			<div class="col-md-8">
+				<div class="card shadow-sm p-4">
+					<div class="d-flex justify-content-between align-items-center mb-3">
+						<h6 class="mb-0">All Users</h6>
+						<input type="text" id="userSearch" class="form-control form-control-sm" placeholder="Search name/email..." oninput="filterRoleUsers(this.value)">
+					</div>
+					<div id="roleTableWrap">
+						<div class="text-muted text-center py-4">Loading...</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-md-4">
+				<div class="card shadow-sm p-4 mb-3">
+					<h6 class="mb-3">Role Permissions</h6>
+
+					<div class="perm-card mb-2">
+						<h6><span class="role-badge role-ADMIN">ADMIN</span></h6>
+						<div class="perm-item"><span class="perm-yes">Yes</span> Full admin pages access</div>
+						<div class="perm-item"><span class="perm-yes">Yes</span> User delete, ban, and promote</div>
+						<div class="perm-item"><span class="perm-yes">Yes</span> Role assignment</div>
+						<div class="perm-item"><span class="perm-yes">Yes</span> Push broadcast</div>
+						<div class="perm-item"><span class="perm-yes">Yes</span> Export and reports</div>
+					</div>
+
+					<div class="perm-card">
+						<h6><span class="role-badge role-USER">USER</span></h6>
+						<div class="perm-item"><span class="perm-yes">Yes</span> Normal app access</div>
+						<div class="perm-item"><span class="perm-no">No</span> No admin tools</div>
+					</div>
+				</div>
+
+				<div class="card shadow-sm p-4">
+					<h6 class="mb-3">Recent Role Changes</h6>
+					<div id="changelogList">
+						<div class="text-muted small text-center py-2">Loading...</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="confirmModal" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered modal-sm">
+			<div class="modal-content">
+				<div class="modal-body p-4 text-center">
+					<div style="font-size:1.3rem;font-weight:800" class="mb-2">ROLE</div>
+					<h6 id="confirmText">Role change karein?</h6>
+					<div class="d-flex gap-2 justify-content-center mt-3">
+						<button class="btn btn-primary btn-sm px-4" id="confirmOkBtn">Confirm</button>
+						<button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-roles.js}"></script>
+</body>
+
+</html>

@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Register | AI Feed</title>
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			background:
+				radial-gradient(circle at top left, rgba(79, 70, 229, .2), transparent 34%),
+				radial-gradient(circle at bottom right, rgba(16, 185, 129, .12), transparent 28%),
+				#070711;
+			font-family: 'Segoe UI', sans-serif;
+			color: #f8fafc;
+		}
+		.auth-shell {
+			width: 100%;
+			max-width: 1080px;
+			display: grid;
+			grid-template-columns: 1.05fr .95fr;
+			border-radius: 24px;
+			overflow: hidden;
+			border: 1px solid rgba(255, 255, 255, .08);
+			background: rgba(10, 10, 20, .92);
+			box-shadow: 0 24px 80px rgba(0, 0, 0, .45);
+		}
+		.brand {
+			padding: 50px;
+			background: linear-gradient(160deg, rgba(99, 102, 241, .96), rgba(91, 33, 182, .95));
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+		.eyebrow {
+			display: inline-flex;
+			width: fit-content;
+			padding: 8px 14px;
+			border-radius: 999px;
+			background: rgba(255, 255, 255, .12);
+			font-size: .78rem;
+			font-weight: 700;
+			letter-spacing: .5px;
+			text-transform: uppercase;
+		}
+		.brand h1 {
+			margin: 18px 0 12px;
+			font-size: 2.35rem;
+			line-height: 1.08;
+			font-weight: 900;
+		}
+		.brand p {
+			margin: 0;
+			max-width: 430px;
+			line-height: 1.7;
+			color: rgba(255, 255, 255, .85);
+			font-size: .96rem;
+		}
+		.brand-grid {
+			margin-top: 28px;
+			display: grid;
+			gap: 12px;
+		}
+		.brand-card {
+			padding: 14px 16px;
+			border-radius: 16px;
+			background: rgba(255, 255, 255, .08);
+		}
+		.brand-card strong {
+			display: block;
+			margin-bottom: 4px;
+			font-size: .92rem;
+		}
+		.brand-card span {
+			color: rgba(255, 255, 255, .78);
+			font-size: .85rem;
+		}
+		.panel {
+			padding: 34px 34px 30px;
+			background: rgba(10, 10, 18, .95);
+		}
+		.stepper {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin-bottom: 24px;
+		}
+		.dot {
+			width: 32px;
+			height: 32px;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #111827;
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #64748b;
+			font-size: .82rem;
+			font-weight: 800;
+		}
+		.dot.active {
+			background: linear-gradient(135deg, #6366f1, #7c3aed);
+			border-color: transparent;
+			color: #fff;
+		}
+		.dot.done {
+			background: #14532d;
+			border-color: #22c55e;
+			color: #86efac;
+		}
+		.line {
+			flex: 1;
+			height: 2px;
+			background: rgba(255, 255, 255, .08);
+		}
+		.line.done {
+			background: linear-gradient(90deg, #22c55e, #6366f1);
+		}
+		.alert {
+			display: none;
+			margin-bottom: 14px;
+			padding: 11px 14px;
+			border-radius: 12px;
+			font-size: .85rem;
+			border: 1px solid transparent;
+		}
+		.alert-error {
+			display: block;
+			background: rgba(239, 68, 68, .12);
+			border-color: #ef4444;
+			color: #fca5a5;
+		}
+		.alert-success {
+			display: block;
+			background: rgba(34, 197, 94, .12);
+			border-color: #22c55e;
+			color: #86efac;
+		}
+		.alert-info {
+			display: block;
+			background: rgba(59, 130, 246, .12);
+			border-color: #3b82f6;
+			color: #93c5fd;
+		}
+		.step { display: none; }
+		.step.active { display: block; }
+		h2 {
+			margin: 0 0 6px;
+			font-size: 1.5rem;
+			font-weight: 800;
+		}
+		.subtitle {
+			margin: 0 0 20px;
+			color: #94a3b8;
+			font-size: .9rem;
+		}
+		.google-btn {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			width: 100%;
+			padding: 12px 14px;
+			border-radius: 14px;
+			background: #fff;
+			color: #111827;
+			font-weight: 700;
+			text-decoration: none;
+			margin-bottom: 14px;
+		}
+		.google-btn:hover { opacity: .92; }
+		.method-grid {
+			display: grid;
+			gap: 12px;
+			margin-top: 14px;
+		}
+		.method-card {
+			width: 100%;
+			padding: 16px;
+			border-radius: 16px;
+			border: 1px solid rgba(255, 255, 255, .08);
+			background: #0f172a;
+			color: #e2e8f0;
+			text-align: left;
+			cursor: pointer;
+		}
+		.method-card.selected {
+			border-color: #6366f1;
+			box-shadow: 0 0 0 1px rgba(99, 102, 241, .4);
+		}
+		.method-card strong {
+			display: block;
+			margin-bottom: 4px;
+			font-size: .92rem;
+		}
+		.method-card span {
+			color: #94a3b8;
+			font-size: .82rem;
+			line-height: 1.5;
+		}
+		.form-group { margin-bottom: 14px; }
+		.form-group label {
+			display: block;
+			margin-bottom: 6px;
+			color: #cbd5e1;
+			font-size: .75rem;
+			font-weight: 700;
+			letter-spacing: .5px;
+			text-transform: uppercase;
+		}
+		.form-group input {
+			width: 100%;
+			padding: 13px 14px;
+			border-radius: 14px;
+			border: 1px solid rgba(255, 255, 255, .08);
+			background: #111827;
+			color: #f8fafc;
+			font-size: .92rem;
+			outline: none;
+		}
+		.form-group input:focus { border-color: #6366f1; }
+		.grid-2 {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 12px;
+		}
+		.strength {
+			margin-top: 7px;
+			height: 4px;
+			border-radius: 999px;
+			background: #1f2937;
+			overflow: hidden;
+		}
+		.strength > span {
+			display: block;
+			height: 100%;
+			width: 0;
+			border-radius: inherit;
+			transition: width .2s ease;
+		}
+		.strength-label {
+			margin-top: 5px;
+			font-size: .78rem;
+			color: #64748b;
+		}
+		.interests {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-top: 8px;
+		}
+		.chip {
+			padding: 8px 12px;
+			border-radius: 999px;
+			border: 1px solid rgba(255, 255, 255, .08);
+			background: #111827;
+			color: #cbd5e1;
+			font-size: .8rem;
+			cursor: pointer;
+		}
+		.chip.selected {
+			background: rgba(99, 102, 241, .18);
+			border-color: #6366f1;
+			color: #c7d2fe;
+		}
+		.actions {
+			display: flex;
+			gap: 10px;
+			margin-top: 16px;
+		}
+		.btn {
+			padding: 12px 16px;
+			border-radius: 14px;
+			border: none;
+			font-weight: 700;
+			font-size: .9rem;
+			cursor: pointer;
+		}
+		.btn-primary {
+			flex: 1;
+			background: linear-gradient(135deg, #6366f1, #7c3aed);
+			color: #fff;
+		}
+		.btn-outline {
+			background: transparent;
+			border: 1px solid rgba(255, 255, 255, .1);
+			color: #cbd5e1;
+		}
+		.btn:disabled {
+			opacity: .5;
+			cursor: not-allowed;
+		}
+		.note-card {
+			padding: 14px 16px;
+			border-radius: 16px;
+			background: #0f172a;
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #cbd5e1;
+			line-height: 1.6;
+			font-size: .88rem;
+		}
+		.otp-row {
+			display: grid;
+			grid-template-columns: repeat(6, 1fr);
+			gap: 8px;
+			margin: 18px 0 14px;
+		}
+		.otp-box {
+			height: 52px;
+			border-radius: 14px;
+			border: 1px solid rgba(255, 255, 255, .08);
+			background: #111827;
+			color: #fff;
+			font-size: 1.2rem;
+			font-weight: 800;
+			text-align: center;
+			outline: none;
+		}
+		.otp-box:focus { border-color: #6366f1; }
+		.helper-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+			color: #94a3b8;
+			font-size: .82rem;
+		}
+		.link {
+			color: #a5b4fc;
+			text-decoration: none;
+			font-weight: 600;
+			cursor: pointer;
+		}
+		.link:hover { text-decoration: underline; }
+		.login-row {
+			margin-top: 18px;
+			text-align: center;
+			color: #94a3b8;
+			font-size: .84rem;
+		}
+		@media (max-width: 820px) {
+			.auth-shell { grid-template-columns: 1fr; }
+			.brand { display: none; }
+			.panel { padding: 26px 20px; }
+		}
+		@media (max-width: 560px) {
+			.grid-2 { grid-template-columns: 1fr; }
+			.otp-row { grid-template-columns: repeat(3, 1fr); }
+			.actions { flex-direction: column; }
+		}
+	</style>
+</head>
+<body>
+	<div class="auth-shell">
+		<section class="brand">
+			<div class="eyebrow">AI Feed Signup</div>
+			<h1>Naya account banao aur apni audience grow karo.</h1>
+			<p>Register ke baad email verification link ya OTP ke through account activate hoga. Google signup bhi available hai.</p>
+			<div class="brand-grid">
+				<div class="brand-card">
+					<strong>Fast onboarding</strong>
+					<span>Email link, OTP ya Google se account banao.</span>
+				</div>
+				<div class="brand-card">
+					<strong>Private account support</strong>
+					<span>Chaaho to sirf followers ke liye apni profile lock kar sakte ho.</span>
+				</div>
+				<div class="brand-card">
+					<strong>2FA ready login</strong>
+					<span>Account settings se email OTP based two-factor security on kar sakte ho.</span>
+				</div>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="stepper">
+				<div class="dot active" id="dot1">1</div>
+				<div class="line" id="line1"></div>
+				<div class="dot" id="dot2">2</div>
+				<div class="line" id="line2"></div>
+				<div class="dot" id="dot3">3</div>
+			</div>
+
+			<div id="globalAlert" class="alert"></div>
+
+			<div class="step active" id="step1">
+				<h2>Verification method chuno</h2>
+				<p class="subtitle">Google direct use kar sakte ho, ya email link / email OTP ke saath normal account bana sakte ho.</p>
+
+				<a href="/auth/google" class="google-btn" th:if="${googleLoginEnabled}">
+					<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+						<path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 2.9L37.1 9.7C33.7 6.7 29.1 5 24 5 12.9 5 4 13.9 4 25s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z" />
+						<path fill="#FF3D00" d="M6.3 14.7l7 5.1C15 16.1 19.2 13 24 13c3.1 0 5.8 1.1 7.9 2.9L37.1 9.7C33.7 6.7 29.1 5 24 5c-7.7 0-14.3 4.4-17.7 9.7z" />
+						<path fill="#4CAF50" d="M24 45c5.1 0 9.8-1.7 13.4-4.6l-6.2-5.2C29.3 36.7 26.8 37.5 24 37.5c-5.2 0-9.6-3.3-11.3-8H6.1l-.1.1C9.3 40.5 16.1 45 24 45z" />
+						<path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.2 5.2C41 35.5 44 30.7 44 25c0-1.7-.1-3.4-.4-5z" />
+					</svg>
+					Google se register karo
+				</a>
+				<div class="alert alert-error" th:if="${param.googleDisabled}" style="margin-bottom:16px;">
+					Google signup abhi configured nahi hai. `GOOGLE_CLIENT_ID` aur `GOOGLE_CLIENT_SECRET` set karne ke baad hi yeh option chalega.
+				</div>
+				<div class="subtitle" style="margin-top:-4px; margin-bottom:16px;">
+					Google chooser open hoga, taaki aap same browser me koi bhi dusri Gmail ID select kar sako.
+				</div>
+
+				<div class="method-grid">
+					<button class="method-card" id="card-link" type="button" onclick="selectMethod('link')">
+						<strong>Email verification link</strong>
+						<span>Email par activation link bheja jayega. Link open karke account verify hoga.</span>
+					</button>
+					<button class="method-card" id="card-otp" type="button" onclick="selectMethod('otp')">
+						<strong>Email OTP</strong>
+						<span>6 digit OTP email par aayega. Isi page par verify karke account active hoga.</span>
+					</button>
+				</div>
+
+				<div class="actions">
+					<button class="btn btn-primary" id="step1Next" type="button" onclick="goStep2()" disabled>Continue</button>
+				</div>
+				<div class="login-row">
+					Pehle se account hai? <a href="/login" class="link">Login karo</a>
+				</div>
+			</div>
+
+			<div class="step" id="step2">
+				<h2>Account details bharo</h2>
+				<p class="subtitle" id="step2Subtitle">Basic profile details aur password set karo.</p>
+
+				<div class="grid-2">
+					<div class="form-group">
+						<label>Full name</label>
+						<input type="text" id="regName" placeholder="Apna naam">
+					</div>
+					<div class="form-group">
+						<label>Username (optional)</label>
+						<input type="text" id="regUsername" placeholder="username">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label>Email</label>
+					<input type="email" id="regEmail" placeholder="email@example.com">
+				</div>
+
+				<div class="grid-2">
+					<div class="form-group">
+						<label>Password</label>
+						<input type="password" id="regPassword" placeholder="Minimum 6 characters" oninput="checkStrength(this.value)">
+						<div class="strength"><span id="strengthBar"></span></div>
+						<div class="strength-label" id="strengthLabel"></div>
+					</div>
+					<div class="form-group">
+						<label>Confirm password</label>
+						<input type="password" id="regConfirm" placeholder="Password dobara daalo">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label>Interests (optional)</label>
+					<div class="interests">
+						<span class="chip" onclick="toggleChip(this, 'comedy')">Comedy</span>
+						<span class="chip" onclick="toggleChip(this, 'music')">Music</span>
+						<span class="chip" onclick="toggleChip(this, 'dance')">Dance</span>
+						<span class="chip" onclick="toggleChip(this, 'food')">Food</span>
+						<span class="chip" onclick="toggleChip(this, 'travel')">Travel</span>
+						<span class="chip" onclick="toggleChip(this, 'tech')">Tech</span>
+						<span class="chip" onclick="toggleChip(this, 'sports')">Sports</span>
+						<span class="chip" onclick="toggleChip(this, 'gaming')">Gaming</span>
+					</div>
+				</div>
+
+				<div class="actions">
+					<button class="btn btn-outline" type="button" onclick="setStep(1)">Back</button>
+					<button class="btn btn-primary" type="button" id="registerBtn" onclick="submitRegister()">Create account</button>
+				</div>
+			</div>
+
+			<div class="step" id="step3">
+				<h2 id="verifyTitle">Email check karo</h2>
+				<p class="subtitle" id="verifySubtitle">Account activate karne ke liye email verification complete karo.</p>
+
+				<div id="linkVerifyBox" class="note-card" style="display:none;">
+					Verification link <strong id="linkEmailDisplay"></strong> par bhej diya gaya hai. Inbox aur spam folder dono check karo.
+				</div>
+
+				<div id="otpVerifyBox" style="display:none;">
+					<div class="note-card">
+						6 digit OTP <strong id="otpEmailDisplay"></strong> par bheja gaya hai. Code yahan enter karo.
+					</div>
+					<div class="otp-row">
+						<input class="otp-box" id="otp1" maxlength="1" inputmode="numeric">
+						<input class="otp-box" id="otp2" maxlength="1" inputmode="numeric">
+						<input class="otp-box" id="otp3" maxlength="1" inputmode="numeric">
+						<input class="otp-box" id="otp4" maxlength="1" inputmode="numeric">
+						<input class="otp-box" id="otp5" maxlength="1" inputmode="numeric">
+						<input class="otp-box" id="otp6" maxlength="1" inputmode="numeric">
+					</div>
+					<div class="actions">
+						<button class="btn btn-primary" type="button" onclick="verifyOtp()">Verify OTP</button>
+					</div>
+					<div class="helper-row">
+						<span id="otpHelper">OTP 5 minute tak valid rahega.</span>
+						<span class="link" id="resendOtpLink" onclick="resendOtp()">Resend OTP</span>
+					</div>
+				</div>
+
+				<div class="actions" id="linkActions" style="display:none;">
+					<button class="btn btn-outline" type="button" onclick="resendLink()">Resend verification link</button>
+				</div>
+
+				<div class="login-row">
+					Verification ke baad <a href="/login" class="link">login page</a> par ja sakte ho.
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<script>
+		let selectedMethod = null
+		let selectedInterests = []
+		let registeredEmail = ''
+
+		function selectMethod(method) {
+			selectedMethod = method
+			document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'))
+			document.getElementById('card-' + method).classList.add('selected')
+			document.getElementById('step1Next').disabled = false
+		}
+
+		function setStep(step) {
+			document.querySelectorAll('.step').forEach(el => el.classList.remove('active'))
+			document.getElementById('step' + step).classList.add('active')
+
+			for (let i = 1; i <= 3; i++) {
+				const dot = document.getElementById('dot' + i)
+				const line = document.getElementById('line' + i)
+				if (dot) {
+					dot.classList.remove('active', 'done')
+					if (i < step) dot.classList.add('done')
+					if (i === step) dot.classList.add('active')
+				}
+				if (line) {
+					line.classList.toggle('done', i < step)
+				}
+			}
+		}
+
+		function goStep2() {
+			if (!selectedMethod) {
+				showAlert('Pehle verification method select karo.', 'error')
+				return
+			}
+			document.getElementById('step2Subtitle').textContent =
+				selectedMethod === 'otp'
+					? 'Email OTP verification ke liye details bharo.'
+					: 'Email verification link ke liye details bharo.'
+			setStep(2)
+		}
+
+		function showAlert(message, type) {
+			const box = document.getElementById('globalAlert')
+			box.className = 'alert alert-' + type
+			box.textContent = message
+			box.style.display = 'block'
+			if (type !== 'success') {
+				setTimeout(() => {
+					box.style.display = 'none'
+				}, 4500)
+			}
+		}
+
+		function toggleChip(el, value) {
+			if (selectedInterests.includes(value)) {
+				selectedInterests = selectedInterests.filter(item => item !== value)
+				el.classList.remove('selected')
+			} else {
+				selectedInterests.push(value)
+				el.classList.add('selected')
+			}
+		}
+
+		function checkStrength(value) {
+			const bar = document.getElementById('strengthBar')
+			const label = document.getElementById('strengthLabel')
+			if (!value) {
+				bar.style.width = '0'
+				label.textContent = ''
+				return
+			}
+			if (value.length < 6) {
+				bar.style.width = '30%'
+				bar.style.background = '#ef4444'
+				label.textContent = 'Weak password'
+				label.style.color = '#fca5a5'
+				return
+			}
+			if (value.length < 10 || !/[A-Z]/.test(value) || !/[0-9]/.test(value)) {
+				bar.style.width = '65%'
+				bar.style.background = '#f59e0b'
+				label.textContent = 'Medium password'
+				label.style.color = '#fcd34d'
+				return
+			}
+			bar.style.width = '100%'
+			bar.style.background = '#22c55e'
+			label.textContent = 'Strong password'
+			label.style.color = '#86efac'
+		}
+
+		async function submitRegister() {
+			const name = document.getElementById('regName').value.trim()
+			const email = document.getElementById('regEmail').value.trim()
+			const password = document.getElementById('regPassword').value
+			const confirm = document.getElementById('regConfirm').value
+			const username = document.getElementById('regUsername').value.trim()
+			const interests = selectedInterests.join(',')
+
+			if (!name) return showAlert('Naam daalo.', 'error')
+			if (!email) return showAlert('Email daalo.', 'error')
+			if (password.length < 6) return showAlert('Password kam se kam 6 characters ka hona chahiye.', 'error')
+			if (password !== confirm) return showAlert('Password aur confirm password match nahi kar rahe.', 'error')
+
+			const btn = document.getElementById('registerBtn')
+			btn.disabled = true
+			btn.textContent = 'Creating account...'
+
+			try {
+				const res = await fetch('/api/auth/register', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						name,
+						email,
+						password,
+						username,
+						interests,
+						verificationMethod: selectedMethod
+					})
+				})
+				const data = await res.json()
+
+				if (!res.ok || data.success === false) {
+					throw new Error(data.message || 'Registration fail ho gaya.')
+				}
+
+				registeredEmail = data.email || email
+				prepareVerificationStep()
+			} catch (error) {
+				showAlert(error.message || 'Registration fail ho gaya. Dobara try karo.', 'error')
+			} finally {
+				btn.disabled = false
+				btn.textContent = 'Create account'
+			}
+		}
+
+		function prepareVerificationStep() {
+			setStep(3)
+			document.getElementById('globalAlert').style.display = 'none'
+
+			const isOtp = selectedMethod === 'otp'
+			document.getElementById('otpVerifyBox').style.display = isOtp ? 'block' : 'none'
+			document.getElementById('linkVerifyBox').style.display = isOtp ? 'none' : 'block'
+			document.getElementById('linkActions').style.display = isOtp ? 'none' : 'flex'
+
+			if (isOtp) {
+				document.getElementById('verifyTitle').textContent = 'OTP verify karo'
+				document.getElementById('verifySubtitle').textContent = 'Email par bheja gaya code enter karke account activate karo.'
+				document.getElementById('otpEmailDisplay').textContent = registeredEmail
+				document.getElementById('otp1').focus()
+			} else {
+				document.getElementById('verifyTitle').textContent = 'Verification link bhej diya gaya'
+				document.getElementById('verifySubtitle').textContent = 'Email open karke account activate karo.'
+				document.getElementById('linkEmailDisplay').textContent = registeredEmail
+			}
+		}
+
+		function readOtp() {
+			return ['otp1', 'otp2', 'otp3', 'otp4', 'otp5', 'otp6']
+				.map(id => document.getElementById(id).value.trim())
+				.join('')
+		}
+
+		async function verifyOtp() {
+			const otp = readOtp()
+			if (otp.length !== 6) {
+				showAlert('6 digit OTP poora daalo.', 'error')
+				return
+			}
+
+			try {
+				const res = await fetch('/api/account/verify-otp', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						email: registeredEmail,
+						purpose: 'VERIFY_EMAIL',
+						otp
+					})
+				})
+				const data = await res.json()
+				if (!res.ok || data.success === false) {
+					throw new Error(data.message || 'OTP verify nahi hua.')
+				}
+
+				showAlert('Email verify ho gaya. Ab login karo.', 'success')
+				setTimeout(() => {
+					window.location.href = '/login?verified'
+				}, 1200)
+			} catch (error) {
+				showAlert(error.message || 'OTP verify nahi hua.', 'error')
+				clearOtpBoxes()
+			}
+		}
+
+		async function resendOtp() {
+			if (!registeredEmail) return
+			try {
+				const res = await fetch('/api/account/send-otp', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						email: registeredEmail,
+						purpose: 'VERIFY_EMAIL'
+					})
+				})
+				const data = await res.json()
+				if (!res.ok || data.success === false) {
+					throw new Error(data.message || 'OTP resend fail ho gaya.')
+				}
+				showAlert('Naya OTP bhej diya gaya.', 'success')
+			} catch (error) {
+				showAlert(error.message || 'OTP resend fail ho gaya.', 'error')
+			}
+		}
+
+		async function resendLink() {
+			if (!registeredEmail) return
+			try {
+				const res = await fetch('/resend-verification?email=' + encodeURIComponent(registeredEmail))
+				if (!res.ok) throw new Error('Verification link resend fail ho gaya.')
+				showAlert('Naya verification link bhej diya gaya.', 'success')
+			} catch (error) {
+				showAlert(error.message || 'Verification link resend fail ho gaya.', 'error')
+			}
+		}
+
+		function clearOtpBoxes() {
+			['otp1', 'otp2', 'otp3', 'otp4', 'otp5', 'otp6'].forEach(id => {
+				document.getElementById(id).value = ''
+			})
+			document.getElementById('otp1').focus()
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			const otpBoxes = Array.from(document.querySelectorAll('.otp-box'))
+			otpBoxes.forEach((box, index) => {
+				box.addEventListener('input', event => {
+					event.target.value = event.target.value.replace(/[^0-9]/g, '')
+					if (event.target.value && otpBoxes[index + 1]) {
+						otpBoxes[index + 1].focus()
+					}
+				})
+				box.addEventListener('keydown', event => {
+					if (event.key === 'Backspace' && !event.target.value && otpBoxes[index - 1]) {
+						otpBoxes[index - 1].focus()
+					}
+				})
+				box.addEventListener('paste', event => {
+					event.preventDefault()
+					const digits = (event.clipboardData || window.clipboardData).getData('text')
+						.replace(/[^0-9]/g, '')
+						.slice(0, 6)
+					digits.split('').forEach((digit, digitIndex) => {
+						if (otpBoxes[digitIndex]) otpBoxes[digitIndex].value = digit
+					})
+				})
+			})
+		})
+	</script>
+</body>
+</html>

@@ -1,0 +1,565 @@
+/* =============================================
+   RESPONSIVE.CSS — Mobile First
+   Sabhi pages ke liye comprehensive
+   Import karo main.css ke BAAD
+   
+   Breakpoints:
+   xs: < 480px   (small phones)
+   sm: < 640px   (phones)
+   md: < 768px   (tablets portrait)
+   lg: < 1024px  (tablets landscape)
+============================================= */
+
+/* =============================================
+   HEADER — Mobile
+============================================= */
+@media (max-width: 768px) {
+	.main-header {
+		padding: 0 12px;
+		gap: 8px;
+	}
+
+	.main-header .nav-menu {
+		display: none;
+	}
+
+	.header-search {
+		max-width: 160px;
+		margin: 0 8px;
+	}
+
+	.notif-bell {
+		width: 32px;
+		height: 32px;
+		font-size: 1rem;
+	}
+
+	.logout-btn {
+		display: none;
+	}
+
+	body>div:not(.main-header):not(.bottom-nav),
+	.reels-container {
+		padding-bottom: var(--bottom-nav-h, 62px);
+	}
+
+	.bottom-nav {
+		display: flex;
+	}
+}
+
+@media (max-width: 480px) {
+	.header-search {
+		max-width: 120px;
+		margin: 0 6px;
+	}
+
+	.main-header .logo a {
+		font-size: 1.1rem;
+	}
+}
+
+/* =============================================
+   REELS / FEED — Mobile
+============================================= */
+@media (max-width: 768px) {
+
+	/* Stories bar */
+	#storyRingsList {
+		padding: 0 10px;
+		gap: 10px;
+	}
+
+	.story-ring-avatar {
+		width: 54px;
+		height: 54px;
+	}
+
+	.story-ring-name {
+		font-size: 0.62rem;
+	}
+
+	/* Story viewer */
+	#storyViewer {
+		border-radius: 0;
+		max-width: 100%;
+	}
+
+	/* Reel actions — smaller */
+	.reel-actions {
+		right: 10px;
+		bottom: 80px;
+		gap: 14px;
+	}
+
+	.action-btn {
+		padding: 8px;
+		min-width: 46px;
+	}
+
+	.btn-icon {
+		font-size: 1.2rem;
+	}
+
+	.btn-label {
+		font-size: 0.6rem;
+	}
+
+	/* Creator info */
+	.reel-info {
+		bottom: 75px;
+		left: 12px;
+		max-width: calc(100% - 76px);
+	}
+
+	.creator-name {
+		font-size: 0.85rem;
+	}
+
+	.reel-caption {
+		font-size: 0.8rem;
+	}
+
+	.creator-avatar {
+		width: 36px;
+		height: 36px;
+	}
+
+	/* Comments panel */
+	.comments-panel {
+		height: 80vh;
+	}
+
+	/* Sidebar hide */
+	.feed-sidebar {
+		display: none !important;
+	}
+
+	/* Language bar */
+	.language-bar {
+		padding: 8px 12px;
+	}
+}
+
+@media (max-width: 480px) {
+	.action-btn {
+		padding: 7px;
+		min-width: 42px;
+	}
+
+	.reel-actions {
+		right: 8px;
+		gap: 12px;
+	}
+}
+
+/* =============================================
+   MESSAGES — Mobile
+============================================= */
+@media (max-width: 768px) {
+	.dm-layout {
+		flex-direction: column;
+		height: calc(100vh - var(--header-h, 60px));
+	}
+
+	.inbox-panel {
+		width: 100%;
+		height: auto;
+		max-height: 220px;
+		border-right: none;
+		border-bottom: 1px solid var(--border, #1e1e1e);
+		flex-shrink: 0;
+	}
+
+	.inbox-header {
+		padding: 10px 14px;
+	}
+
+	.inbox-search-wrap {
+		padding: 6px 10px;
+	}
+
+	.chat-panel {
+		flex: 1;
+		min-height: 0;
+	}
+
+	.chat-header {
+		padding: 10px 14px;
+		min-height: 50px;
+	}
+
+	.chat-messages {
+		padding: 10px;
+	}
+
+	.chat-input-area {
+		padding: 8px 10px;
+	}
+}
+
+@media (max-width: 480px) {
+	.inbox-panel {
+		max-height: 180px;
+	}
+
+	.send-btn {
+		padding: 9px 14px;
+		font-size: 0.8rem;
+	}
+}
+
+/* =============================================
+   PROFILE — Mobile
+============================================= */
+@media (max-width: 768px) {
+	.profile-container {
+		padding: 70px 12px 80px;
+	}
+
+	.profile-cover {
+		height: 140px;
+		border-radius: 14px;
+	}
+
+	.profile-avatar-section {
+		margin-top: -40px;
+		padding: 0 12px;
+		gap: 14px;
+	}
+
+	.profile-avatar-wrap img {
+		width: 80px;
+		height: 80px;
+	}
+
+	.profile-name {
+		font-size: 1.2rem;
+	}
+
+	.profile-bio {
+		font-size: 0.82rem;
+	}
+
+	.profile-actions {
+		margin-left: 0;
+		width: 100%;
+	}
+
+	.btn-edit {
+		flex: 1;
+		text-align: center;
+		justify-content: center;
+	}
+
+	.profile-stats-bar {
+		padding: 12px 0 0;
+	}
+
+	.stat-item {
+		padding: 8px 14px;
+	}
+
+	.stat-num {
+		font-size: 1.1rem;
+	}
+
+	.video-grid {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 2px;
+	}
+}
+
+@media (max-width: 480px) {
+	.video-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.profile-tabs {
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.profile-tab-btn {
+		padding: 10px 14px;
+		font-size: 0.78rem;
+		white-space: nowrap;
+	}
+}
+
+/* =============================================
+   SEARCH — Mobile
+============================================= */
+@media (max-width: 768px) {
+	.search-page {
+		padding: 16px 12px;
+	}
+
+	.search-bar-wrap input {
+		padding: 12px 44px 12px 16px;
+		font-size: 0.9rem;
+	}
+
+	.search-tabs {
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	.search-tab-btn {
+		padding: 7px 14px;
+		font-size: 0.78rem;
+	}
+}
+
+/* =============================================
+   NOTIFICATIONS — Mobile
+============================================= */
+@media (max-width: 768px) {
+	.notif-page {
+		padding: 16px 12px;
+	}
+
+	.notif-title-row {
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+}
+
+/* =============================================
+   UPLOAD — Mobile
+============================================= */
+@media (max-width: 768px) {
+	.upload-page {
+		padding: 16px 12px;
+	}
+
+	.upload-card {
+		padding: 20px 16px;
+		border-radius: 14px;
+	}
+}
+
+/* =============================================
+   AUTH PAGES — Mobile (login/register)
+============================================= */
+@media (max-width: 720px) {
+	.auth-wrap {
+		flex-direction: column;
+		border-radius: 16px;
+		max-width: 420px;
+		margin: 0 auto;
+	}
+
+	.auth-brand {
+		display: none;
+	}
+
+	.auth-form {
+		width: 100%;
+		padding: 28px 20px;
+	}
+}
+
+@media (max-width: 480px) {
+	body {
+		padding: 10px;
+	}
+
+	.auth-form {
+		padding: 24px 16px;
+		border-radius: 14px;
+	}
+
+	.step-indicator {
+		margin-bottom: 16px;
+	}
+
+	.method-card {
+		padding: 12px 14px;
+	}
+
+	.method-icon {
+		font-size: 1.4rem;
+	}
+}
+
+/* =============================================
+   HASHTAG PAGE — Mobile
+============================================= */
+@media (max-width: 768px) {
+	.hashtag-wrap {
+		padding: 16px 12px;
+	}
+
+	.hashtag-search-bar {
+		flex-wrap: wrap;
+	}
+
+	.hashtag-input {
+		min-width: 0;
+	}
+}
+
+/* =============================================
+   ACCOUNT SETTINGS — Mobile
+============================================= */
+@media (max-width: 768px) {
+	.settings-layout {
+		flex-direction: column;
+	}
+
+	.settings-sidebar {
+		width: 100%;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		padding: 12px;
+	}
+
+	.settings-tab {
+		width: auto;
+	}
+}
+
+/* =============================================
+   ADMIN — Mobile (basic)
+============================================= */
+@media (max-width: 768px) {
+	.admin-content {
+		padding: 12px;
+	}
+
+	.stats-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.admin-table-wrap {
+		overflow-x: auto;
+	}
+}
+
+/* =============================================
+   MODALS — Mobile
+============================================= */
+@media (max-width: 480px) {
+	.modal-box {
+		width: 94vw;
+		border-radius: 16px;
+	}
+
+	.modal-header {
+		padding: 14px 16px;
+	}
+
+	.modal-body {
+		padding: 16px;
+		gap: 12px;
+	}
+
+	.modal-footer {
+		padding: 12px 16px;
+	}
+}
+
+/* =============================================
+   TOUCH IMPROVEMENTS
+============================================= */
+@media (hover: none) and (pointer: coarse) {
+
+	/* Larger touch targets */
+	.action-btn {
+		min-height: 48px;
+		min-width: 48px;
+	}
+
+	.notif-bell {
+		min-height: 44px;
+		min-width: 44px;
+	}
+
+	.bottom-nav a {
+		min-height: 44px;
+	}
+
+	.inbox-item {
+		padding: 14px 16px;
+	}
+
+	/* Remove hover effects on touch */
+	.video-thumb:hover video {
+		transform: none;
+	}
+
+	.video-thumb:hover .video-thumb-overlay {
+		opacity: 0;
+	}
+
+	/* Story ring tap */
+	.story-ring:active {
+		transform: scale(0.95);
+	}
+
+	/* Button tap */
+	.action-btn:active {
+		transform: scale(0.92);
+	}
+
+	.btn-primary:active {
+		transform: scale(0.97);
+	}
+}
+
+/* =============================================
+   LANDSCAPE PHONE
+============================================= */
+@media (max-width: 768px) and (orientation: landscape) {
+	.auth-wrap {
+		max-height: 95vh;
+		overflow-y: auto;
+	}
+
+	.auth-brand {
+		display: none;
+	}
+
+	.auth-form {
+		padding: 20px;
+	}
+
+	/* Reel landscape — horizontal layout */
+	.reel-actions {
+		bottom: 20px;
+		right: 16px;
+		flex-direction: row;
+		gap: 10px;
+	}
+
+	.reel-info {
+		bottom: 70px;
+	}
+}
+
+/* =============================================
+   UTILITY — Safe Area (iPhone notch)
+============================================= */
+.bottom-nav {
+	padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.chat-input-area {
+	padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
+}
+
+/* =============================================
+   PRINT — Hide unnecessary
+============================================= */
+@media print {
+
+	.main-header,
+	.bottom-nav,
+	.reel-actions,
+	.stories-bar,
+	.chat-input-area {
+		display: none !important;
+	}
+}

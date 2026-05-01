@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>User Management - AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+
+	<!-- SIDEBAR -->
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='users')}"></div>
+	<div class="main-content">
+
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h4 class="mb-0">User Management</h4>
+			<div class="d-flex gap-2 align-items-center">
+				<a href="/admin/roles" class="btn btn-outline-light btn-sm">Manage Roles</a>
+				<span class="text-muted small">
+					<span id="shownCount" th:text="${#lists.size(users)}"></span>
+					/
+					<span th:text="${#lists.size(users)}"></span>
+					users
+				</span>
+				<input type="text" id="userSearch" placeholder="Search users..."
+					class="form-control form-control-sm search-bar" oninput="filterUsers(this.value)">
+			</div>
+		</div>
+
+		<div class="card shadow">
+			<table class="table table-hover mb-0" id="usersTable">
+				<thead class="table-dark">
+					<tr>
+						<th>ID</th>
+						<th>User</th>
+						<th>Email</th>
+						<th>Role</th>
+						<th>Status</th>
+						<th>Videos</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody id="usersBody">
+					<tr th:each="user : ${users}" th:id="'user-row-' + ${user.id}"
+						th:attr="data-name=${user.name}, data-email=${user.email}, data-role=${user.role}, data-status=${user.enabled ? 'active' : 'blocked'}">
+
+						<td th:text="${user.id}"></td>
+
+						<td>
+							<div class="d-flex align-items-center gap-2">
+								<img th:if="${user.avatar}" th:src="${user.avatar}" class="avatar-sm"
+									onerror="this.src='/images/default.png'">
+								<div th:unless="${user.avatar}" class="avatar-sm avatar-placeholder">U</div>
+								<span th:text="${user.name}" class="fw-semibold"></span>
+							</div>
+						</td>
+
+						<td th:text="${user.email}" class="text-muted"></td>
+
+						<td th:with="role=${user.role != null ? #strings.toUpperCase(user.role) : 'USER'}">
+							<div class="d-flex flex-column gap-1">
+								<span th:id="'role-badge-' + ${user.id}" class="badge align-self-start"
+									th:text="${role}"
+									th:classappend="${role == 'ADMIN'} ? ' bg-danger' : ' bg-secondary'"></span>
+								<a href="/admin/roles" class="small text-decoration-none">Update on Roles screen</a>
+							</div>
+						</td>
+
+						<td>
+							<span th:if="${user.enabled}" class="badge bg-success status-badge">Active</span>
+							<span th:unless="${user.enabled}" class="badge bg-danger status-badge">Blocked</span>
+						</td>
+
+						<td>
+							<button class="btn btn-outline-primary btn-sm videos-btn"
+								th:attr="data-uid=${user.id}, data-name=${user.name}" onclick="openVideosModal(this)">
+								Videos
+							</button>
+						</td>
+
+						<td>
+							<div class="d-flex gap-1 flex-wrap">
+
+								<!-- Block / Unblock AJAX -->
+								<button th:if="${user.enabled}" class="btn btn-outline-danger btn-sm"
+									th:attr="data-uid=${user.id}, data-action='block'"
+									onclick="toggleBlock(this)">Block</button>
+
+								<button th:unless="${user.enabled}" class="btn btn-outline-success btn-sm"
+									th:attr="data-uid=${user.id}, data-action='unblock'"
+									onclick="toggleBlock(this)">Unblock</button>
+
+								<!-- Temp Ban -->
+								<button class="btn btn-outline-warning btn-sm"
+									th:attr="data-uid=${user.id}, data-name=${user.name}" onclick="openTempBan(this)">Temp
+									Ban</button>
+
+								<!-- Warn -->
+								<button class="btn btn-outline-secondary btn-sm"
+									th:attr="data-uid=${user.id}, data-name=${user.name}"
+									onclick="openWarnModal(this)">Warn</button>
+
+								<!-- Activity -->
+								<button class="btn btn-outline-info btn-sm" th:attr="data-uid=${user.id}"
+									onclick="openActivity(this)">Activity</button>
+
+								<!-- Delete User -->
+								<button class="btn btn-danger btn-sm"
+									th:attr="data-uid=${user.id}, data-name=${user.name}" onclick="deleteUser(this)">Delete</button>
+
+								<a th:href="@{/profile/user/{id}(id=${user.id})}"
+									class="btn btn-outline-info btn-sm">View</a>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+	</div>
+
+	<!-- VIDEOS MODAL -->
+	<div class="modal fade" id="videosModal" tabindex="-1">
+		<div class="modal-dialog modal-xl">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="videosModalTitle">User Videos</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body" id="videosModalBody">
+					<div class="text-center py-4 text-muted">Loading...</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- TEMP BAN MODAL -->
+	<div class="modal fade" id="tempBanModal" tabindex="-1">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h6 class="modal-title">Temporary Ban</h6>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<p class="small text-muted">Kitne din ke liye ban karna hai?</p>
+					<p id="tempBanUserName" class="fw-bold"></p>
+					<select class="form-select form-select-sm" id="tempBanDays">
+						<option value="1">1 Din</option>
+						<option value="3">3 Din</option>
+						<option value="7" selected>7 Din</option>
+						<option value="14">14 Din</option>
+						<option value="30">30 Din</option>
+					</select>
+					<input type="hidden" id="tempBanUserId">
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-warning btn-sm" onclick="applyTempBan()">Ban Karo</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- WARN MODAL -->
+	<div class="modal fade" id="warnModal" tabindex="-1">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h6 class="modal-title">Send Warning</h6>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<p id="warnUserName" class="fw-bold"></p>
+					<select class="form-select form-select-sm mb-2" id="warnReason">
+						<option>Inappropriate content</option>
+						<option>Spam behavior</option>
+						<option>Harassment</option>
+						<option>Terms of Service violation</option>
+						<option>Copyright infringement</option>
+					</select>
+					<input type="hidden" id="warnUserId">
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-secondary btn-sm" onclick="sendWarning()">Send Warning</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ACTIVITY MODAL -->
+	<div class="modal fade" id="activityModal" tabindex="-1">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">User Activity</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body" id="activityBody">
+					<div class="text-center py-4 text-muted">Loading...</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Toast -->
+	<div id="adminToast"></div>
+
+	<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+	<script th:src="@{/js/admin-users.js}"></script>
+</body>
+
+</html>

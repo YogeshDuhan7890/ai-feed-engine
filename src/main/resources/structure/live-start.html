@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Go Live | AI Feed</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		* {
+			box-sizing: border-box
+		}
+
+		body {
+			background: #07070f;
+			color: #f1f1f8;
+			font-family: 'Segoe UI', sans-serif;
+			margin: 0
+		}
+
+		.live-wrap {
+			max-width: 900px;
+			margin: 0 auto;
+			padding: 80px 20px 40px
+		}
+
+		h1 {
+			font-size: 1.6rem;
+			font-weight: 800;
+			margin-bottom: 6px
+		}
+
+		.sub {
+			color: #6b7280;
+			font-size: .88rem;
+			margin-bottom: 28px
+		}
+
+		.live-layout {
+			display: flex;
+			gap: 20px;
+			flex-wrap: wrap
+		}
+
+		.live-preview-col {
+			flex: 1;
+			min-width: 280px
+		}
+
+		.live-controls-col {
+			width: 300px;
+			flex-shrink: 0
+		}
+
+		/* Preview */
+		.preview-box {
+			background: #000;
+			border-radius: 16px;
+			overflow: hidden;
+			aspect-ratio: 16/9;
+			position: relative;
+			border: 2px solid #1a1a2e
+		}
+
+		#localVideo {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block
+		}
+
+		.preview-placeholder {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			color: #374151;
+			gap: 10px
+		}
+
+		.preview-placeholder .icon {
+			font-size: 3rem
+		}
+
+		.live-badge {
+			position: absolute;
+			top: 12px;
+			left: 12px;
+			background: #f43f5e;
+			color: #fff;
+			padding: 4px 12px;
+			border-radius: 20px;
+			font-size: .75rem;
+			font-weight: 800;
+			letter-spacing: .5px;
+			display: none;
+			animation: pulseLive 1.5s infinite
+		}
+
+		@keyframes pulseLive {
+
+			0%,
+			100% {
+				opacity: 1
+			}
+
+			50% {
+				opacity: .6
+			}
+		}
+
+		.viewer-count-badge {
+			position: absolute;
+			top: 12px;
+			right: 12px;
+			background: rgba(0, 0, 0, .6);
+			backdrop-filter: blur(4px);
+			color: #fff;
+			padding: 4px 12px;
+			border-radius: 20px;
+			font-size: .78rem;
+			font-weight: 600;
+			display: none
+		}
+
+		/* Controls */
+		.controls-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .08);
+			border-radius: 16px;
+			padding: 20px
+		}
+
+		.controls-card h3 {
+			font-size: .95rem;
+			font-weight: 700;
+			margin-bottom: 16px
+		}
+
+		.form-group {
+			margin-bottom: 14px
+		}
+
+		.form-group label {
+			display: block;
+			font-size: .72rem;
+			font-weight: 700;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: .4px;
+			margin-bottom: 5px
+		}
+
+		.form-group input {
+			width: 100%;
+			background: rgba(255, 255, 255, .05);
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 10px;
+			padding: 10px 14px;
+			color: #f1f1f8;
+			font-size: .88rem;
+			outline: none;
+			transition: border-color .2s
+		}
+
+		.form-group input:focus {
+			border-color: #6366f1
+		}
+
+		/* Device toggles */
+		.device-row {
+			display: flex;
+			gap: 8px;
+			margin-bottom: 16px;
+			flex-wrap: wrap
+		}
+
+		.screen-btn {
+			padding: 9px 14px;
+			background: rgba(99, 102, 241, .12);
+			border: 1px solid rgba(99, 102, 241, .3);
+			color: #818cf8;
+			border-radius: 10px;
+			cursor: pointer;
+			font-size: .8rem;
+			font-weight: 600;
+			font-family: inherit;
+			transition: all .2s;
+			display: flex;
+			align-items: center;
+			gap: 5px
+		}
+
+		.screen-btn:hover {
+			background: rgba(99, 102, 241, .2)
+		}
+
+		.screen-btn.active {
+			background: rgba(99, 102, 241, .25);
+			color: #a5b4fc
+		}
+
+		.device-btn {
+			flex: 1;
+			padding: 10px;
+			background: rgba(255, 255, 255, .06);
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 12px;
+			color: #9ca3af;
+			font-size: .82rem;
+			cursor: pointer;
+			transition: all .2s;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px
+		}
+
+		.device-btn:hover {
+			background: rgba(255, 255, 255, .1);
+			color: #f1f1f8
+		}
+
+		.device-btn.active {
+			background: rgba(99, 102, 241, .2);
+			border-color: rgba(99, 102, 241, .4);
+			color: #818cf8
+		}
+
+		.device-btn.muted {
+			background: rgba(244, 63, 94, .1);
+			border-color: rgba(244, 63, 94, .3);
+			color: #f87171
+		}
+
+		/* Go Live button */
+		.go-live-btn {
+			width: 100%;
+			padding: 14px;
+			background: linear-gradient(135deg, #f43f5e, #ec4899);
+			color: #fff;
+			border: none;
+			border-radius: 14px;
+			font-size: 1rem;
+			font-weight: 800;
+			cursor: pointer;
+			transition: all .2s;
+			margin-top: 6px;
+			box-shadow: 0 4px 20px rgba(244, 63, 94, .3);
+			letter-spacing: .3px
+		}
+
+		.go-live-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 24px rgba(244, 63, 94, .4)
+		}
+
+		.go-live-btn:disabled {
+			opacity: .5;
+			cursor: not-allowed;
+			transform: none
+		}
+
+		.end-live-btn {
+			width: 100%;
+			padding: 14px;
+			background: rgba(244, 63, 94, .12);
+			border: 1px solid rgba(244, 63, 94, .3);
+			color: #f87171;
+			border-radius: 14px;
+			font-size: 1rem;
+			font-weight: 700;
+			cursor: pointer;
+			transition: all .2s;
+			margin-top: 8px;
+			display: none
+		}
+
+		.end-live-btn:hover {
+			background: rgba(244, 63, 94, .2)
+		}
+
+		/* Share link */
+		.share-box {
+			background: rgba(99, 102, 241, .08);
+			border: 1px solid rgba(99, 102, 241, .2);
+			border-radius: 12px;
+			padding: 14px;
+			margin-top: 14px;
+			display: none
+		}
+
+		.share-box label {
+			font-size: .72rem;
+			color: #818cf8;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .4px;
+			display: block;
+			margin-bottom: 6px
+		}
+
+		.share-link-row {
+			display: flex;
+			gap: 8px
+		}
+
+		.share-link-row input {
+			flex: 1;
+			background: rgba(255, 255, 255, .05);
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 8px;
+			padding: 8px 12px;
+			color: #a5b4fc;
+			font-size: .78rem;
+			outline: none
+		}
+
+		.copy-btn {
+			background: #6366f1;
+			border: none;
+			color: #fff;
+			padding: 8px 14px;
+			border-radius: 8px;
+			cursor: pointer;
+			font-size: .78rem;
+			font-weight: 600;
+			white-space: nowrap
+		}
+
+		/* Chat section */
+		.chat-section {
+			margin-top: 20px
+		}
+
+		.chat-section h3 {
+			font-size: .88rem;
+			font-weight: 700;
+			margin-bottom: 10px;
+			color: #9ca3af
+		}
+
+		.live-chat-box {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 12px;
+			height: 280px;
+			overflow-y: auto;
+			padding: 12px;
+			display: flex;
+			flex-direction: column;
+			gap: 8px
+		}
+
+		.live-chat-box::-webkit-scrollbar {
+			width: 3px
+		}
+
+		.live-chat-box::-webkit-scrollbar-thumb {
+			background: #2a2a3e;
+			border-radius: 2px
+		}
+
+		.chat-msg {
+			font-size: .82rem;
+			line-height: 1.4
+		}
+
+		.chat-msg .sender {
+			font-weight: 700;
+			color: #818cf8;
+			margin-right: 6px
+		}
+
+		.chat-msg .text {
+			color: #d1d5db
+		}
+
+		.chat-system {
+			font-size: .75rem;
+			color: #4b5563;
+			text-align: center;
+			padding: 4px 0
+		}
+
+		/* Stats */
+		.stream-stats {
+			display: flex;
+			gap: 12px;
+			margin-top: 14px
+		}
+
+		.stat-pill {
+			flex: 1;
+			background: rgba(255, 255, 255, .04);
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 10px;
+			padding: 10px;
+			text-align: center
+		}
+
+		.stat-pill .num {
+			font-size: 1.3rem;
+			font-weight: 800;
+			color: #f1f1f8
+		}
+
+		.stat-pill .lbl {
+			font-size: .65rem;
+			color: #6b7280;
+			margin-top: 2px
+		}
+
+		@media(max-width:640px) {
+			.live-layout {
+				flex-direction: column
+			}
+
+			.live-controls-col {
+				width: 100%
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="live-wrap">
+		<h1>🔴 Go Live</h1>
+		<p class="sub">Apni audience ke saath live jao — real-time streaming</p>
+
+		<div class="live-layout">
+
+			<!-- Preview -->
+			<div class="live-preview-col">
+				<div class="preview-box">
+					<video id="localVideo" autoplay muted playsinline></video>
+					<div class="preview-placeholder" id="previewPlaceholder">
+						<div class="icon">📷</div>
+						<div>Camera preview yahan dikhega</div>
+					</div>
+					<div class="live-badge" id="liveBadge">● LIVE</div>
+					<div class="viewer-count-badge" id="viewerBadge">👁 0</div>
+				</div>
+
+				<!-- Device controls -->
+				<div class="device-row" style="margin-top:12px">
+					<button class="device-btn active" id="camBtn" onclick="toggleCamera()">📷 Camera</button>
+					<button class="device-btn active" id="micBtn" onclick="toggleMic()">🎤 Mic</button>
+					<button class="device-btn" id="screenBtn" onclick="toggleScreen()">🖥️ Screen</button>
+				</div>
+
+				<!-- Stream stats -->
+				<div class="stream-stats" id="streamStats" style="display:none">
+					<div class="stat-pill">
+						<div class="num" id="statViewers">0</div>
+						<div class="lbl">Viewers</div>
+					</div>
+					<div class="stat-pill">
+						<div class="num" id="statDuration">0:00</div>
+						<div class="lbl">Duration</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Controls -->
+			<div class="live-controls-col">
+				<div class="controls-card">
+					<h3>⚙️ Stream Settings</h3>
+					<div class="form-group">
+						<label>Stream Title</label>
+						<input type="text" id="streamTitle" placeholder="Apna live ka title daalo...">
+					</div>
+
+					<button class="go-live-btn" id="goLiveBtn" onclick="startLive()">
+						🔴 Go Live
+					</button>
+					<button class="end-live-btn" id="endLiveBtn" onclick="endLive()">
+						⏹ Stream End Karo
+					</button>
+
+					<div class="share-box" id="shareBox">
+						<label>Share Link</label>
+						<div class="share-link-row">
+							<input type="text" id="shareLink" readonly>
+							<button class="copy-btn" onclick="copyLink()">📋 Copy</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Live Chat -->
+				<div class="chat-section">
+					<h3>💬 Live Chat</h3>
+					<div class="live-chat-box" id="liveChatBox">
+						<div class="chat-system">Chat yahan dikhega...</div>
+					</div>
+					<div style="display:flex;gap:8px;margin-top:8px">
+						<input id="hostChatInput" type="text" placeholder="Message likho..." style="flex:1;background:#1a1a2e;border:1px solid rgba(255,255,255,.1);color:#f1f1f8;
+							padding:8px 12px;border-radius:10px;font-size:.82rem;outline:none"
+							onkeydown="if(event.key==='Enter')sendHostChat()">
+						<button onclick="sendHostChat()" style="background:#6366f1;border:none;color:#fff;
+							padding:8px 14px;border-radius:10px;cursor:pointer;font-size:.82rem">Send</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+	<script>
+		let stompClient = null
+		let localStream = null
+		let peerConnections = {}
+		let streamKey = null
+		let isLive = false
+		let startTime = null
+		let durationTimer = null
+		let camEnabled = true
+		let micEnabled = true
+
+		const STUN_SERVERS = {
+			iceServers: [
+				{urls: 'stun:stun.l.google.com:19302'},
+				{urls: 'stun:stun1.l.google.com:19302'}
+			]
+		}
+
+		// ─── Camera init ─────────────────────────────────────────────────────────────
+		async function initCamera() {
+			try {
+				localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true})
+				document.getElementById('localVideo').srcObject = localStream
+				document.getElementById('previewPlaceholder').style.display = 'none'
+			} catch (e) {
+				showMsg('Camera/mic access nahi mila: ' + e.message, 'error')
+			}
+		}
+
+		function toggleCamera() {
+			if (!localStream) return
+			camEnabled = !camEnabled
+			localStream.getVideoTracks().forEach(t => t.enabled = camEnabled)
+			const btn = document.getElementById('camBtn')
+			btn.classList.toggle('muted', !camEnabled)
+			btn.textContent = camEnabled ? '📷 Camera' : '📷 Off'
+		}
+
+		function toggleMic() {
+			if (!localStream) return
+			micEnabled = !micEnabled
+			localStream.getAudioTracks().forEach(t => t.enabled = micEnabled)
+			const btn = document.getElementById('micBtn')
+			btn.classList.toggle('muted', !micEnabled)
+			btn.textContent = micEnabled ? '🎤 Mic' : '🎤 Muted'
+		}
+
+		async function toggleScreen() {
+			try {
+				const screen = await navigator.mediaDevices.getDisplayMedia({video: true})
+				const videoTrack = screen.getVideoTracks()[0]
+				localStream.getVideoTracks().forEach(t => localStream.removeTrack(t))
+				localStream.addTrack(videoTrack)
+				document.getElementById('localVideo').srcObject = localStream
+				document.getElementById('screenBtn').classList.add('active')
+				videoTrack.onended = () => {
+					document.getElementById('screenBtn').classList.remove('active')
+				}
+			} catch (e) { /* User cancelled */}
+		}
+
+		// ─── WebSocket connect ────────────────────────────────────────────────────────
+		function connectWS(key) {
+			const sock = new SockJS('/ws')
+			stompClient = Stomp.over(sock)
+			stompClient.debug = null
+
+			stompClient.connect({}, () => {
+				// Listen for answers from viewers
+				stompClient.subscribe('/topic/live/' + key + '/answer', msg => {
+					const data = JSON.parse(msg.body)
+					const pc = peerConnections[data.viewerId]
+					if (pc) pc.setRemoteDescription(new RTCSessionDescription(data.answer))
+				})
+
+				// Listen for ICE candidates
+				stompClient.subscribe('/topic/live/' + key + '/ice', msg => {
+					const data = JSON.parse(msg.body)
+					if (!data.isHost) {
+						const pc = peerConnections[data.viewerId]
+						if (pc && data.candidate) pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+					}
+				})
+
+				// Events (viewer join/leave)
+				stompClient.subscribe('/topic/live/' + key + '/events', msg => {
+					const data = JSON.parse(msg.body)
+					if (data.type === 'VIEWER_JOINED') {
+						addChatMsg('system', data.viewerName + ' join kiya! 🎉')
+						updateViewerCount(data.viewerCount)
+						// Offer bhejo naye viewer ko
+						createOfferForViewer(data.viewerId, key)
+					} else if (data.type === 'VIEWER_COUNT') {
+						updateViewerCount(data.viewerCount)
+					}
+				})
+
+				// Live chat
+				stompClient.subscribe('/topic/live/' + key + '/chat', msg => {
+					const data = JSON.parse(msg.body)
+					addChatMsg(data.senderName, data.message)
+				})
+			})
+		}
+
+		async function createOfferForViewer(viewerId, key) {
+			const pc = new RTCPeerConnection(STUN_SERVERS)
+			peerConnections[viewerId] = pc
+
+			localStream.getTracks().forEach(track => pc.addTrack(track, localStream))
+
+			pc.onicecandidate = e => {
+				if (e.candidate) {
+					stompClient.send('/app/live.ice', {}, JSON.stringify({
+						streamKey: key, candidate: e.candidate,
+						viewerId, isHost: true
+					}))
+				}
+			}
+
+			const offer = await pc.createOffer()
+			await pc.setLocalDescription(offer)
+
+			stompClient.send('/app/live.offer', {}, JSON.stringify({
+				streamKey: key, offer: pc.localDescription, viewerId
+			}))
+		}
+
+		// ─── Start Live ───────────────────────────────────────────────────────────────
+		async function startLive() {
+			const title = document.getElementById('streamTitle').value.trim()
+			if (!localStream) await initCamera()
+			if (!localStream) return
+
+			const btn = document.getElementById('goLiveBtn')
+			btn.disabled = true; btn.textContent = 'Shuru ho raha hai...'
+
+			try {
+				const csrf = document.querySelector('meta[name="_csrf"]')?.getAttribute('content')
+				const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN'
+
+				const res = await fetch('/api/live/start', {
+					method: 'POST',
+					headers: {'Content-Type': 'application/json', [csrfHeader]: csrf},
+					body: JSON.stringify({title: title || 'My Live Stream'})
+				})
+				const data = await res.json()
+				if (!data.success) throw new Error('Failed to start')
+
+				streamKey = data.streamKey
+				isLive = true
+
+				// UI update
+				document.getElementById('liveBadge').style.display = 'block'
+				document.getElementById('viewerBadge').style.display = 'block'
+				document.getElementById('streamStats').style.display = 'flex'
+				document.getElementById('shareBox').style.display = 'block'
+				document.getElementById('endLiveBtn').style.display = 'block'
+				btn.style.display = 'none'
+
+				const watchUrl = window.location.origin + '/live/watch/' + streamKey
+				document.getElementById('shareLink').value = watchUrl
+
+				// Connect WebSocket
+				connectWS(streamKey)
+
+				// Duration timer
+				startTime = Date.now()
+				durationTimer = setInterval(updateDuration, 1000)
+
+				addChatMsg('system', '🔴 Live stream shuru ho gayi!')
+				showMsg('Live ho gaye! 🎉', 'success')
+
+			} catch (e) {
+				btn.disabled = false; btn.textContent = '🔴 Go Live'
+				showMsg('Live start fail: ' + e.message, 'error')
+			}
+		}
+
+		// ─── Screen Share ────────────────────────────────────────────────────────────
+		let screenStream = null
+		let isScreenSharing = false
+
+		async function toggleScreenShare() {
+			const btn = document.getElementById('screenShareBtn')
+			if (isScreenSharing) {
+				// Stop screen share, go back to camera
+				screenStream?.getTracks().forEach(t => t.stop())
+				screenStream = null
+				isScreenSharing = false
+				btn.classList.remove('active')
+				btn.textContent = '🖥 Screen Share'
+				// Switch all peer connections back to camera
+				if (localStream) replaceTrackInPeers(localStream.getVideoTracks()[0])
+				document.getElementById('localVideo').srcObject = localStream
+			} else {
+				try {
+					screenStream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
+					isScreenSharing = true
+					btn.classList.add('active')
+					btn.textContent = '⏹ Stop Share'
+					// Replace video track in all peers
+					const screenTrack = screenStream.getVideoTracks()[0]
+					replaceTrackInPeers(screenTrack)
+					document.getElementById('localVideo').srcObject = screenStream
+					// Auto stop when user stops from browser UI
+					screenTrack.onended = () => toggleScreenShare()
+				} catch (e) {
+					showMsg('Screen share nahi ho saka: ' + e.message, 'error')
+				}
+			}
+		}
+
+		function replaceTrackInPeers(newTrack) {
+			Object.values(peerConnections).forEach(pc => {
+				const sender = pc.getSenders().find(s => s.track?.kind === 'video')
+				if (sender) sender.replaceTrack(newTrack)
+			})
+		}
+
+		// ─── End Live ─────────────────────────────────────────────────────────────────
+		async function endLive() {
+			if (!confirm('Live stream band karna chahte ho?')) return
+
+			const csrf = document.querySelector('meta[name="_csrf"]')?.getAttribute('content')
+			const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN'
+
+			await fetch('/api/live/end', {method: 'POST', headers: {[csrfHeader]: csrf}})
+
+			clearInterval(durationTimer)
+			Object.values(peerConnections).forEach(pc => pc.close())
+			peerConnections = {}
+			stompClient?.disconnect()
+			isLive = false
+
+			document.getElementById('liveBadge').style.display = 'none'
+			document.getElementById('endLiveBtn').style.display = 'none'
+			document.getElementById('goLiveBtn').style.display = 'block'
+			document.getElementById('goLiveBtn').disabled = false
+			document.getElementById('goLiveBtn').textContent = '🔴 Go Live'
+			document.getElementById('streamStats').style.display = 'none'
+			document.getElementById('shareBox').style.display = 'none'
+
+			addChatMsg('system', '⏹ Stream khatam ho gayi')
+		}
+
+		// ─── Utils ────────────────────────────────────────────────────────────────────
+		function updateViewerCount(count) {
+			document.getElementById('viewerBadge').textContent = '👁 ' + count
+			document.getElementById('statViewers').textContent = count
+		}
+
+		function updateDuration() {
+			const elapsed = Math.floor((Date.now() - startTime) / 1000)
+			const m = Math.floor(elapsed / 60), s = elapsed % 60
+			document.getElementById('statDuration').textContent = m + ':' + String(s).padStart(2, '0')
+		}
+
+		function sendHostChat() {
+			const input = document.getElementById('hostChatInput')
+			const text = input?.value?.trim()
+			if (!text || !stompClient || !streamKey) return
+			stompClient.send('/app/live.chat', {}, JSON.stringify({
+				streamKey, senderName: 'Host 🎙️', text, type: 'CHAT'
+			}))
+			input.value = ''
+		}
+
+		function addChatMsg(sender, text) {
+			const box = document.getElementById('liveChatBox')
+			if (sender === 'system') {
+				const div = document.createElement('div')
+				div.className = 'chat-system'; div.textContent = text
+				box.appendChild(div)
+			} else {
+				const div = document.createElement('div')
+				div.className = 'chat-msg'
+				div.innerHTML = `<span class="sender">${sender}</span><span class="text">${text}</span>`
+				box.appendChild(div)
+			}
+			box.scrollTop = box.scrollHeight
+			// Max 100 messages
+			while (box.children.length > 100) box.removeChild(box.firstChild)
+		}
+
+		function copyLink() {
+			const link = document.getElementById('shareLink').value
+			navigator.clipboard.writeText(link).then(() => showMsg('Link copy ho gaya! 🔗', 'success'))
+		}
+
+		function showMsg(msg, type = 'info') {
+			const t = document.createElement('div')
+			t.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:${type === 'error' ? '#f43f5e' : type === 'success' ? '#10b981' : '#6366f1'};
+    color:#fff;padding:10px 20px;border-radius:24px;font-size:.85rem;font-weight:600;
+    z-index:9999;animation:toastIn .3s ease`
+			t.textContent = msg
+			document.body.appendChild(t)
+			setTimeout(() => t.remove(), 3000)
+		}
+
+		// Auto-init camera on load
+		window.addEventListener('load', initCamera)
+	</script>
+</body>
+
+</html>

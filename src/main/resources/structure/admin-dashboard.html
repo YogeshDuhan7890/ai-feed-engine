@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>AI Feed - Admin Dashboard</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+		.metric-card {
+			border-radius: 16px;
+			border: none;
+			padding: 20px;
+			position: relative;
+			overflow: hidden;
+			transition: transform 0.2s, box-shadow 0.2s;
+		}
+
+		.metric-card:hover {
+			transform: translateY(-3px);
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+		}
+
+		.metric-card .bg-icon {
+			position: absolute;
+			right: 16px;
+			top: 50%;
+			transform: translateY(-50%);
+			font-size: 3.5rem;
+			opacity: 0.15;
+		}
+
+		.metric-card .label {
+			font-size: 0.72rem;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+			opacity: 0.8;
+		}
+
+		.metric-card .value {
+			font-size: 2.2rem;
+			font-weight: 800;
+		}
+
+		.metric-card .change {
+			font-size: 0.78rem;
+			opacity: 0.9;
+		}
+
+		.card-purple {
+			background: linear-gradient(135deg, #6c63ff, #a78bfa);
+			color: #fff;
+		}
+
+		.card-green {
+			background: linear-gradient(135deg, #22c55e, #86efac);
+			color: #fff;
+		}
+
+		.card-orange {
+			background: linear-gradient(135deg, #f59e0b, #fde68a);
+			color: #fff;
+		}
+
+		.card-red {
+			background: linear-gradient(135deg, #ef4444, #fca5a5);
+			color: #fff;
+		}
+
+		.quick-action {
+			border-radius: 12px;
+			padding: 14px 16px;
+			border: 2px solid #f0f0ff;
+			cursor: pointer;
+			transition: all 0.2s;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			text-decoration: none;
+			color: inherit;
+		}
+
+		.quick-action:hover {
+			border-color: #6c63ff;
+			background: #f8f8ff;
+			transform: translateY(-2px);
+		}
+
+		.quick-action .icon {
+			font-size: 1.6rem;
+		}
+
+		.alert-item {
+			border-radius: 10px;
+			padding: 10px 14px;
+			margin-bottom: 8px;
+			font-size: 0.85rem;
+			border-left: 4px solid;
+		}
+
+		.alert-HIGH {
+			background: #fff5f5;
+			border-color: #ef4444;
+			color: #dc2626;
+		}
+
+		.alert-MEDIUM {
+			background: #fffbeb;
+			border-color: #f59e0b;
+			color: #d97706;
+		}
+
+		.alert-LOW {
+			background: #f0fdf4;
+			border-color: #22c55e;
+			color: #16a34a;
+		}
+
+		.alert-INFO {
+			background: #eff6ff;
+			border-color: #3b82f6;
+			color: #2563eb;
+		}
+	</style>
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='dashboard')}"></div>
+	<div class="main-content">
+
+		<!-- HEADER -->
+		<div class="d-flex align-items-center justify-content-between mb-4">
+			<div class="d-flex align-items-center gap-2">
+				<span id="liveIndicator" class="badge bg-success"
+					style="font-size:0.65rem;animation:pulse 2s infinite">LIVE</span>
+				<h4 class="mb-0">Enterprise Dashboard</h4>
+				<small class="text-muted ms-1" id="lastRefresh"></small>
+			</div>
+			<div class="d-flex align-items-center gap-3">
+				<!-- Notification Bell -->
+				<div class="admin-notif-wrap" id="notifWrap">
+					<button class="admin-bell-btn" onclick="toggleNotifPanel()">
+						Alerts
+						<span class="bell-count" id="bellCount" style="display:none">0</span>
+					</button>
+					<div class="admin-notif-panel" id="notifPanel" style="display:none">
+						<div class="notif-header">Admin Alerts</div>
+						<div id="notifList"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- METRIC CARDS -->
+		<div class="row g-3 mb-4">
+			<div class="col-md-3">
+				<div class="card shadow metric-card card-purple">
+					<div class="label">Total Users</div>
+					<div class="value" id="usersCount" th:text="${users}">0</div>
+					<div class="change">Registered users</div>
+					<div class="bg-icon">US</div>
+				</div>
+			</div>
+			<div class="col-md-3">
+				<div class="card shadow metric-card card-green">
+					<div class="label">Total Videos</div>
+					<div class="value" id="postsCount" th:text="${posts}">0</div>
+					<div class="change">Uploaded content</div>
+					<div class="bg-icon">VD</div>
+				</div>
+			</div>
+			<div class="col-md-3">
+				<div class="card shadow metric-card card-orange">
+					<div class="label">Engagements</div>
+					<div class="value" id="engagementCount" th:text="${engagements}">0</div>
+					<div class="change">Likes, comments, shares</div>
+					<div class="bg-icon">EN</div>
+				</div>
+			</div>
+			<div class="col-md-3">
+				<div class="card shadow metric-card card-red">
+					<div class="label">Pending Reports</div>
+					<div class="value" id="pendingReports">0</div>
+					<div class="change">Need review</div>
+					<div class="bg-icon">RP</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ROW 2: Chart + Alerts -->
+		<div class="row g-4 mb-4">
+			<div class="col-md-8">
+				<div class="card shadow p-4">
+					<div class="d-flex justify-content-between align-items-center mb-3">
+						<h6 class="mb-0">Engagement Trend (7 days)</h6>
+						<a href="/admin/analytics" class="btn btn-outline-secondary btn-sm">Full Analytics</a>
+					</div>
+					<canvas id="engChart" height="80"></canvas>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="card shadow p-4 h-100">
+					<h6 class="mb-3">Live Alerts</h6>
+					<div id="alertsList">
+						<div class="text-muted small text-center py-3">Loading...</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ROW 3: Quick Actions -->
+		<div class="card shadow p-4 mb-4">
+			<h6 class="mb-3">Quick Actions</h6>
+			<div class="row g-3">
+				<div class="col-md-3"><a href="/admin/users" class="quick-action">
+						<div class="icon">U</div>
+						<div>
+							<div class="fw-semibold small">Manage Users</div>
+							<div class="text-muted" style="font-size:0.75rem">Block, ban, promote</div>
+						</div>
+					</a></div>
+				<div class="col-md-3"><a href="/admin/moderation" class="quick-action">
+						<div class="icon">M</div>
+						<div>
+							<div class="fw-semibold small">AI Moderation</div>
+							<div class="text-muted" style="font-size:0.75rem">Scan suspicious content</div>
+						</div>
+					</a></div>
+				<div class="col-md-3"><a href="/admin/reports" class="quick-action">
+						<div class="icon">R</div>
+						<div>
+							<div class="fw-semibold small">View Reports</div>
+							<div class="text-muted" style="font-size:0.75rem">Resolve pending reports</div>
+						</div>
+					</a></div>
+				<div class="col-md-3"><a href="/admin/notifications-broadcast" class="quick-action">
+						<div class="icon">N</div>
+						<div>
+							<div class="fw-semibold small">Broadcast</div>
+							<div class="text-muted" style="font-size:0.75rem">Send push notification</div>
+						</div>
+					</a></div>
+				<div class="col-md-3"><a href="/admin/export" class="quick-action">
+						<div class="icon">E</div>
+						<div>
+							<div class="fw-semibold small">Export Reports</div>
+							<div class="text-muted" style="font-size:0.75rem">CSV & PDF download</div>
+						</div>
+					</a></div>
+				<div class="col-md-3"><a href="/admin/audit" class="quick-action">
+						<div class="icon">A</div>
+						<div>
+							<div class="fw-semibold small">Audit Log</div>
+							<div class="text-muted" style="font-size:0.75rem">Track admin actions</div>
+						</div>
+					</a></div>
+				<div class="col-md-3"><a href="/admin/heatmap" class="quick-action">
+						<div class="icon">H</div>
+						<div>
+							<div class="fw-semibold small">Engagement Heatmap</div>
+							<div class="text-muted" style="font-size:0.75rem">Activity visualization</div>
+						</div>
+					</a></div>
+				<div class="col-md-3"><a href="/admin/monitor" class="quick-action">
+						<div class="icon">S</div>
+						<div>
+							<div class="fw-semibold small">System Health</div>
+							<div class="text-muted" style="font-size:0.75rem">CPU, RAM, DB status</div>
+						</div>
+					</a></div>
+			</div>
+		</div>
+
+		<!-- Trending Videos -->
+		<div class="card shadow p-4">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h6 class="mb-0">Trending Videos</h6>
+				<a href="/admin/videos" class="btn btn-outline-secondary btn-sm">All Videos</a>
+			</div>
+			<div id="trendingLoading" class="text-muted small">Loading...</div>
+			<table class="table table-hover mt-2" id="trendingTableWrap" style="display:none">
+				<thead class="table-light">
+					<tr>
+						<th>Post</th>
+						<th>Author</th>
+						<th>Score</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+				<tbody id="trendingBody"></tbody>
+			</table>
+		</div>
+
+	</div>
+	<script th:inline="javascript">
+		window.chartLabels = /*[[${chartLabels}]]*/[];
+		window.chartValues = /*[[${chartValues}]]*/[];
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-dashboard.js}"></script>
+
+	<button id="darkModeToggle" onclick="toggleDark()" title="Toggle Dark Mode">Dark</button>
+	<script>
+		function toggleDark() {
+			document.body.classList.toggle('dark-mode');
+			const isDark = document.body.classList.contains('dark-mode');
+			localStorage.setItem('adminDarkMode', isDark);
+			document.getElementById('darkModeToggle').textContent = isDark ? 'Light' : 'Dark';
+		}
+		if (localStorage.getItem('adminDarkMode') === 'true') {
+			document.body.classList.add('dark-mode');
+			const btn = document.getElementById('darkModeToggle');
+			if (btn) btn.textContent = 'Light';
+		}
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Email Verify Karo | AI Feed</title>
+	<style>
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			background: #0a0a14;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-family: 'Segoe UI', sans-serif;
+			padding: 20px;
+		}
+
+		.card {
+			background: #111;
+			border-radius: 20px;
+			padding: 48px 40px;
+			max-width: 460px;
+			width: 100%;
+			text-align: center;
+			box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+		}
+
+		.icon {
+			font-size: 3.5rem;
+			margin-bottom: 20px;
+		}
+
+		h1 {
+			color: #fff;
+			font-size: 1.4rem;
+			font-weight: 800;
+			margin-bottom: 10px;
+		}
+
+		.sub {
+			color: #666;
+			font-size: 0.88rem;
+			line-height: 1.6;
+			margin-bottom: 28px;
+		}
+
+		.alert-success {
+			background: rgba(39, 174, 96, 0.12);
+			border: 1px solid #27ae60;
+			color: #6bcf8d;
+			border-radius: 10px;
+			padding: 14px 18px;
+			font-size: 0.9rem;
+			margin-bottom: 24px;
+			line-height: 1.5;
+		}
+
+		.alert-error {
+			background: rgba(231, 76, 60, 0.12);
+			border: 1px solid #e74c3c;
+			color: #ff6b6b;
+			border-radius: 10px;
+			padding: 14px 18px;
+			font-size: 0.9rem;
+			margin-bottom: 24px;
+			line-height: 1.5;
+		}
+
+		.btn {
+			display: inline-block;
+			padding: 13px 30px;
+			background: linear-gradient(135deg, #4f46e5, #7c3aed);
+			color: #fff;
+			text-decoration: none;
+			border-radius: 10px;
+			font-weight: 700;
+			font-size: 0.95rem;
+			margin: 6px;
+			border: none;
+			cursor: pointer;
+			transition: opacity 0.2s;
+		}
+
+		.btn:hover {
+			opacity: 0.88;
+		}
+
+		.btn-outline {
+			background: transparent;
+			border: 1.5px solid #333;
+			color: #888;
+		}
+
+		.btn-outline:hover {
+			border-color: #4f46e5;
+			color: #4f46e5;
+		}
+
+		.resend-form {
+			margin-top: 20px;
+		}
+
+		.resend-form input {
+			width: 100%;
+			padding: 11px 14px;
+			background: #1a1a1a;
+			border: 1.5px solid #222;
+			border-radius: 10px;
+			color: #eee;
+			font-size: 0.88rem;
+			outline: none;
+			margin-bottom: 10px;
+		}
+
+		.resend-form input:focus {
+			border-color: #4f46e5;
+		}
+
+		.divider {
+			color: #333;
+			margin: 20px 0;
+			font-size: 0.8rem;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="card">
+
+		<!-- Email sent page (register ke baad redirect) -->
+		<div th:if="${param.emailSent == null and successMsg == null and errorMsg == null}">
+			<div class="icon">📬</div>
+			<h1>Email Check Karo!</h1>
+			<p class="sub">
+				Tumhare email pe verification link bhej diya hai.<br>
+				Link par click karo aur account activate karo.<br>
+				<strong style="color:#888;">Link 24 ghante ke liye valid hai.</strong>
+			</p>
+			<a href="/login" class="btn btn-outline">Login Page</a>
+		</div>
+
+		<!-- Register redirect — email sent -->
+		<div th:if="${param.emailSent != null}">
+			<div class="icon">📬</div>
+			<h1>Email Bhej Diya! ✅</h1>
+			<p class="sub">
+				Apna inbox check karo — verification link bheja hai.<br>
+				Email na mile to spam folder dekho.<br>
+				<strong style="color:#888;">24 ghante mein verify karo.</strong>
+			</p>
+			<div class="divider">— link nahi mila? —</div>
+			<!-- Resend form -->
+			<form class="resend-form" th:action="@{/resend-verification}" method="get">
+				<input type="email" name="email" placeholder="Apna email daalo" required>
+				<button type="submit" class="btn" style="width:100%;">🔄 Naya Link Bhejo</button>
+			</form>
+			<br>
+			<a href="/login" class="btn btn-outline">Login Page</a>
+		</div>
+
+		<!-- Success message (verified!) -->
+		<div th:if="${successMsg != null}">
+			<div class="icon">🎉</div>
+			<h1>Verification Complete!</h1>
+			<div class="alert-success" th:text="${successMsg}"></div>
+			<a href="/login" class="btn">Login Karo →</a>
+		</div>
+
+		<!-- Error message -->
+		<div th:if="${errorMsg != null}">
+			<div class="icon">❌</div>
+			<h1>Kuch Gadbad Hai</h1>
+			<div class="alert-error" th:text="${errorMsg}"></div>
+
+			<!-- Resend option on expire -->
+			<div th:if="${showResend}">
+				<div class="divider">— Naya link mangwao —</div>
+				<form class="resend-form" th:action="@{/resend-verification}" method="get">
+					<input type="email" name="email" placeholder="Apna email daalo" required>
+					<button type="submit" class="btn" style="width:100%;">🔄 Naya Link Bhejo</button>
+				</form>
+			</div>
+			<br>
+			<a href="/register" class="btn btn-outline">Wapas Register</a>
+		</div>
+
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,106 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ai_feed_engine
+    username: postgres
+    password: postgres
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      leak-detection-threshold: 60000
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${SPRING_REDIS_PASSWORD}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 4
+          min-idle: 1
+          max-wait: 1000ms
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      acks: 1
+      batch-size: 16384
+      linger-ms: 5
+      compression-type: snappy
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration: 86400000
+
+mail:
+  zoho:
+    host: ${MAIL_ZOHO_HOST:smtp.zoho.in}
+    port: ${MAIL_ZOHO_PORT:587}
+    username: ${MAIL_ZOHO_USERNAME:}
+    password: ${MAIL_ZOHO_PASSWORD:}
+  gmail:
+    host: ${MAIL_GMAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_GMAIL_PORT:587}
+    username: ${MAIL_GMAIL_USERNAME:}
+    password: ${MAIL_GMAIL_PASSWORD:}
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  security:
+    allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:8080,http://127.0.0.1:8080}
+
+upload:
+  path: uploads/
+
+push:
+  vapid:
+    public-key:
+    private-key:
+    subject: ${PUSH_VAPID_SUBJECT:mailto:admin@localhost}
+
+logging:
+  level:
+    root: WARN
+    com.yogesh: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.mail: DEBUG
+    org.hibernate.SQL: WARN
+    org.springframework.web: WARN
+
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_YOUR_KEY_HERE}
+  key-secret: ${RAZORPAY_KEY_SECRET:YOUR_SECRET_HERE}
+  account-id: ${RAZORPAY_ACCOUNT_ID:}
+
+ai:
+  groq-api-key: ${GROQ_API_KEY:}

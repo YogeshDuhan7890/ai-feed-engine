@@ -1,0 +1,343 @@
+<th:block th:fragment="header">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="manifest" href="/manifest.json">
+	<link rel="stylesheet" th:href="@{/css/theme.css}">
+	<style>
+		.role-drawer-backdrop {
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, .55);
+			backdrop-filter: blur(3px);
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity .2s ease;
+			z-index: 1200;
+		}
+
+		.role-drawer-backdrop.open {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		.role-drawer {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: min(320px, 88vw);
+			height: 100vh;
+			background: #0b0b14;
+			border-right: 1px solid rgba(255, 255, 255, .08);
+			box-shadow: 16px 0 40px rgba(0, 0, 0, .35);
+			transform: translateX(-102%);
+			transition: transform .24s ease;
+			z-index: 1201;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.role-drawer.open {
+			transform: translateX(0);
+		}
+
+		.role-drawer-head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 18px 18px 14px;
+			border-bottom: 1px solid rgba(255, 255, 255, .06);
+		}
+
+		.role-drawer-title {
+			font-size: 1rem;
+			font-weight: 800;
+			color: #f1f1f8;
+		}
+
+		.role-badge {
+			margin-top: 4px;
+			display: inline-flex;
+			align-items: center;
+			padding: 4px 10px;
+			border-radius: 999px;
+			background: rgba(99, 102, 241, .14);
+			color: #a5b4fc;
+			font-size: .72rem;
+			font-weight: 700;
+			letter-spacing: .3px;
+		}
+
+		.role-drawer-close,
+		.role-menu-btn {
+			background: rgba(255, 255, 255, .06);
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #e5e7eb;
+			width: 38px;
+			height: 38px;
+			border-radius: 12px;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+		}
+
+		.role-menu-btn {
+			margin-right: 8px;
+		}
+
+		.logo {
+			display: flex;
+			align-items: center;
+		}
+
+		.role-drawer-body {
+			flex: 1;
+			overflow-y: auto;
+			padding: 12px;
+		}
+
+		.role-drawer-section {
+			margin-bottom: 16px;
+		}
+
+		.role-drawer-label {
+			font-size: .72rem;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: .45px;
+			padding: 8px 10px;
+		}
+
+		.role-drawer-link {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 12px 12px;
+			border-radius: 14px;
+			color: #e5e7eb;
+			text-decoration: none;
+			font-size: .9rem;
+			font-weight: 600;
+			transition: background .18s ease, color .18s ease;
+		}
+
+		.role-drawer-link:hover,
+		.role-drawer-link.active {
+			background: rgba(99, 102, 241, .14);
+			color: #c7d2fe;
+		}
+
+		.role-drawer-foot {
+			padding: 14px 16px 18px;
+			border-top: 1px solid rgba(255, 255, 255, .06);
+			color: #9ca3af;
+			font-size: .78rem;
+		}
+	</style>
+
+	<header class="main-header">
+		<div class="logo">
+			<button type="button" class="role-menu-btn" id="roleMenuBtn" title="Open menu">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+					<line x1="4" y1="7" x2="20" y2="7" />
+					<line x1="4" y1="12" x2="20" y2="12" />
+					<line x1="4" y1="17" x2="20" y2="17" />
+				</svg>
+			</button>
+			<a th:href="@{/feed}">
+				<span class="logo-icon">AI</span>
+				<span class="logo-text">AI FEED</span>
+			</a>
+		</div>
+
+		<nav class="nav-menu" id="mainNavMenu">
+			<a th:href="@{/feed}" data-path="/feed">Home</a>
+			<a th:href="@{/hashtag/trending}" data-path="/hashtag">Explore</a>
+			<a th:href="@{/upload}" data-path="/upload">Upload</a>
+			<a th:href="@{/profile}" data-path="/profile">Profile</a>
+			<a th:href="@{/analytics}" data-path="/analytics" th:if="${!isStaffUser}">Stats</a>
+			<a th:href="@{/monetization}" data-path="/monetization">Earn</a>
+			<a th:href="@{/admin/dashboard}" data-path="/admin" th:if="${isAdminUser}">Admin</a>
+		</nav>
+
+		<div class="header-search" id="headerSearchWrap">
+			<div class="search-input-wrap">
+				<input id="headerSearchInput" type="text" placeholder="Search users..." autocomplete="off" />
+				<span class="search-icon">
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+						<circle cx="11" cy="11" r="8" />
+						<path d="m21 21-4.35-4.35" />
+					</svg>
+				</span>
+			</div>
+			<div class="search-dropdown" id="searchDropdown" style="display:none;">
+				<div id="searchResults"></div>
+			</div>
+		</div>
+
+		<div class="header-right">
+			<a th:href="@{/messages}" class="hdr-icon-btn" title="Messages">
+				<div class="hdr-icon-wrap">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+						<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+					</svg>
+					<span class="hdr-badge" id="dmBadge" style="display:none;">0</span>
+				</div>
+				<span class="hdr-label">Chats</span>
+			</a>
+
+			<a th:href="@{/notifications}" class="hdr-icon-btn" title="Notifications">
+				<div class="hdr-icon-wrap">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+						<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+						<path d="M13.73 21a2 2 0 0 1-3.46 0" />
+					</svg>
+					<span class="hdr-badge" id="notifBadge" style="display:none;">0</span>
+				</div>
+				<span class="hdr-label">Alerts</span>
+			</a>
+
+			<div class="hdr-divider"></div>
+
+			<button class="hdr-icon-btn hdr-theme-btn" data-theme-toggle title="Toggle theme">
+				<div class="hdr-icon-wrap">
+					<svg id="themeIconDark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+						stroke-width="1.8">
+						<circle cx="12" cy="12" r="5" />
+						<path
+							d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+					</svg>
+					<svg id="themeIconLight" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
+						style="display:none">
+						<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+					</svg>
+				</div>
+			</button>
+
+			<form th:action="@{/logout}" method="post" style="margin:0" th:if="${isAuthenticatedUser}">
+				<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+				<button type="submit" class="logout-btn">Logout</button>
+			</form>
+		</div>
+
+		<meta th:if="${#authentication != null and #authentication.principal != 'anonymousUser'}" name="current-username"
+			th:content="${#authentication.name}" />
+		<script th:src="@{/js/realtime.js}"></script>
+		<script th:src="@{/js/theme.js}"></script>
+		<script th:src="@{/js/header.js}"></script>
+		<script th:src="@{/js/blockReport.js}"></script>
+		<script>
+			(function () {
+				var path = window.location.pathname;
+				document.querySelectorAll('#mainNavMenu a[data-path]').forEach(function (a) {
+					var dp = a.getAttribute('data-path');
+					if (path === dp || (dp !== '/feed' && path.startsWith(dp))) a.classList.add('active');
+				});
+				document.querySelectorAll('.bottom-nav a[data-path]').forEach(function (a) {
+					if (path.startsWith(a.getAttribute('data-path'))) a.classList.add('active');
+				});
+				document.querySelectorAll('[data-drawer-path]').forEach(function (a) {
+					var dp = a.getAttribute('data-drawer-path');
+					if (path === dp || (dp !== '/feed' && path.startsWith(dp))) a.classList.add('active');
+				});
+				function syncIcon() {
+					var t = document.documentElement.getAttribute('data-theme') || 'dark';
+					var d = document.getElementById('themeIconDark');
+					var l = document.getElementById('themeIconLight');
+					if (d) d.style.display = t === 'dark' ? '' : 'none';
+					if (l) l.style.display = t === 'light' ? '' : 'none';
+				}
+				syncIcon();
+				window.addEventListener('themechange', syncIcon);
+			})();
+		</script>
+	</header>
+
+	<div class="role-drawer-backdrop" id="roleDrawerBackdrop"></div>
+	<aside class="role-drawer" id="roleDrawer" aria-hidden="true">
+		<div class="role-drawer-head">
+			<div>
+				<div class="role-drawer-title">Quick Navigation</div>
+				<div class="role-badge" th:text="${currentUserRole}">USER</div>
+			</div>
+			<button type="button" class="role-drawer-close" id="roleDrawerClose" title="Close menu">×</button>
+		</div>
+
+		<div class="role-drawer-body">
+			<div class="role-drawer-section" th:if="${isAuthenticatedUser}">
+				<div class="role-drawer-label">Account</div>
+				<a class="role-drawer-link" th:href="@{/feed}" data-drawer-path="/feed">Feed</a>
+				<a class="role-drawer-link" th:href="@{/messages}" data-drawer-path="/messages">Messages</a>
+				<a class="role-drawer-link" th:href="@{/notifications}" data-drawer-path="/notifications">Notifications</a>
+				<a class="role-drawer-link" th:href="@{/profile}" data-drawer-path="/profile">My Profile</a>
+				<a class="role-drawer-link" th:href="@{/account/settings}" data-drawer-path="/account/settings">Account Settings</a>
+				<a class="role-drawer-link" th:href="@{/saved}" data-drawer-path="/saved">Saved</a>
+				<a class="role-drawer-link" th:href="@{/upload}" data-drawer-path="/upload">Upload</a>
+				<a class="role-drawer-link" th:href="@{/analytics}" data-drawer-path="/analytics"
+					th:if="${!isStaffUser}">Stats</a>
+				<a class="role-drawer-link" th:href="@{/monetization}" data-drawer-path="/monetization">Monetization</a>
+			</div>
+
+			<div class="role-drawer-section" th:if="${isStaffUser}">
+				<div class="role-drawer-label">Staff Panel</div>
+				<a class="role-drawer-link" th:href="@{/admin/dashboard}" data-drawer-path="/admin/dashboard"
+					th:if="${isAdminUser}">Dashboard</a>
+				<a class="role-drawer-link" th:href="@{/admin/analytics}" data-drawer-path="/admin/analytics">Analytics</a>
+				<a class="role-drawer-link" th:href="@{/admin/reports}" data-drawer-path="/admin/reports"
+					th:if="${isAdminUser}">Reports</a>
+				<a class="role-drawer-link" th:href="@{/admin/comments}" data-drawer-path="/admin/comments"
+					th:if="${isAdminUser}">Comments</a>
+				<a class="role-drawer-link" th:href="@{/admin/users}" data-drawer-path="/admin/users"
+					th:if="${isAdminUser}">Users</a>
+				<a class="role-drawer-link" th:href="@{/admin/monitor}" data-drawer-path="/admin/monitor"
+					th:if="${isAdminUser}">System Monitor</a>
+				<a class="role-drawer-link" th:href="@{/admin/roles}" data-drawer-path="/admin/roles"
+					th:if="${isAdminUser}">Roles</a>
+			</div>
+		</div>
+
+		<div class="role-drawer-foot">
+			<div th:if="${isStaffUser}">Role-based tools visible hain. Sirf assigned role ke links show honge.</div>
+			<div th:if="${!isStaffUser}">Aapke account role ke hisaab se menu items dikh rahe hain.</div>
+		</div>
+	</aside>
+
+	<nav class="bottom-nav">
+		<a th:href="@{/feed}" data-path="/feed">
+			<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+				<polyline points="9 22 9 12 15 12 15 22" />
+			</svg>
+			<span>Home</span>
+		</a>
+		<a th:href="@{/hashtag/trending}" data-path="/hashtag">
+			<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<circle cx="11" cy="11" r="8" />
+				<path d="m21 21-4.35-4.35" />
+			</svg>
+			<span>Explore</span>
+		</a>
+		<a th:href="@{/upload}" data-path="/upload">
+			<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+				<circle cx="12" cy="12" r="10" />
+				<line x1="12" y1="8" x2="12" y2="16" />
+				<line x1="8" y1="12" x2="16" y2="12" />
+			</svg>
+			<span>Upload</span>
+		</a>
+		<a th:href="@{/messages}" data-path="/messages" style="position:relative">
+			<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+			</svg>
+			<span>Chats</span>
+		</a>
+		<a th:href="@{/profile}" data-path="/profile">
+			<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+				<circle cx="12" cy="7" r="4" />
+			</svg>
+			<span>Profile</span>
+		</a>
+	</nav>
+</th:block>

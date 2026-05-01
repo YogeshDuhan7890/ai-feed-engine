@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Saved Videos | AI Feed</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		html,
+		body {
+			background: #07070f;
+			color: #f1f1f8;
+			font-family: 'Segoe UI', sans-serif;
+			margin: 0;
+		}
+
+		.saved-page {
+			max-width: 760px;
+			margin: 0 auto;
+			padding: 80px 16px 100px;
+		}
+
+		/* ── Header ── */
+		.saved-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 20px;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+
+		.saved-header h1 {
+			font-size: 1.3rem;
+			font-weight: 800;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.saved-count-pill {
+			background: rgba(99, 102, 241, .15);
+			border: 1px solid rgba(99, 102, 241, .25);
+			color: #818cf8;
+			padding: 2px 10px;
+			border-radius: 20px;
+			font-size: .72rem;
+			font-weight: 700;
+		}
+
+		.saved-sort {
+			background: rgba(255, 255, 255, .06);
+			border: 1px solid rgba(255, 255, 255, .1);
+			color: #9ca3af;
+			padding: 7px 14px;
+			border-radius: 20px;
+			font-size: .78rem;
+			cursor: pointer;
+			font-family: inherit;
+			transition: all .2s;
+		}
+
+		.saved-sort:hover {
+			background: rgba(255, 255, 255, .1);
+			color: #f1f1f8;
+		}
+
+		/* ── Grid ── */
+		.saved-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+			gap: 12px;
+		}
+
+		/* ── Video Card ── */
+		.saved-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 16px;
+			overflow: hidden;
+			cursor: pointer;
+			transition: all .2s;
+			position: relative;
+		}
+
+		.saved-card:hover {
+			border-color: rgba(99, 102, 241, .3);
+			transform: translateY(-3px);
+			box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+		}
+
+		.saved-card-thumb {
+			width: 100%;
+			aspect-ratio: 9/16;
+			object-fit: cover;
+			display: block;
+			background: #1a1a2e;
+		}
+
+		.saved-card video {
+			width: 100%;
+			aspect-ratio: 9/16;
+			object-fit: cover;
+			display: block;
+		}
+
+		.saved-card-info {
+			padding: 10px 12px 12px;
+		}
+
+		.saved-card-caption {
+			font-size: .82rem;
+			font-weight: 600;
+			color: #e5e7eb;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			margin-bottom: 4px;
+		}
+
+		.saved-card-meta {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-size: .72rem;
+			color: #6b7280;
+		}
+
+		.saved-card-av {
+			width: 18px;
+			height: 18px;
+			border-radius: 50%;
+			object-fit: cover;
+			background: #1a1a2e;
+		}
+
+		/* Remove button */
+		.saved-remove-btn {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			background: rgba(0, 0, 0, .7);
+			border: 1px solid rgba(255, 255, 255, .15);
+			color: #fff;
+			width: 28px;
+			height: 28px;
+			border-radius: 50%;
+			cursor: pointer;
+			font-size: .75rem;
+			display: none;
+			align-items: center;
+			justify-content: center;
+			transition: background .15s;
+			backdrop-filter: blur(4px);
+		}
+
+		.saved-card:hover .saved-remove-btn {
+			display: flex;
+		}
+
+		.saved-remove-btn:hover {
+			background: rgba(244, 63, 94, .8);
+		}
+
+		/* Play overlay */
+		.saved-play-overlay {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 44px;
+			height: 44px;
+			border-radius: 50%;
+			background: rgba(0, 0, 0, .6);
+			backdrop-filter: blur(4px);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.1rem;
+			pointer-events: none;
+		}
+
+		.saved-card:hover .saved-play-overlay {
+			display: flex;
+		}
+
+		/* Saved date badge */
+		.saved-date-badge {
+			position: absolute;
+			bottom: 60px;
+			left: 8px;
+			background: rgba(0, 0, 0, .6);
+			color: rgba(255, 255, 255, .7);
+			font-size: .65rem;
+			padding: 2px 7px;
+			border-radius: 10px;
+			backdrop-filter: blur(4px);
+		}
+
+		/* ── Skeleton ── */
+		.sk-saved-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+			gap: 12px;
+		}
+
+		.sk-saved-card {
+			background: #0d0d1a;
+			border-radius: 16px;
+			overflow: hidden;
+			animation: skPulse 1.4s infinite;
+		}
+
+		.sk-saved-card .sk-thumb {
+			width: 100%;
+			aspect-ratio: 9/16;
+			background: #111122;
+		}
+
+		.sk-saved-card .sk-info {
+			padding: 10px 12px;
+		}
+
+		.sk-line {
+			height: 9px;
+			border-radius: 4px;
+			background: #111122;
+			margin-bottom: 6px;
+		}
+
+		.sk-line.short {
+			width: 55%;
+		}
+
+		@keyframes skPulse {
+
+			0%,
+			100% {
+				opacity: .3
+			}
+
+			50% {
+				opacity: .7
+			}
+		}
+
+		/* ── Empty ── */
+		.saved-empty {
+			text-align: center;
+			padding: 80px 20px;
+			color: #374151;
+			grid-column: 1/-1;
+		}
+
+		.saved-empty .icon {
+			font-size: 4rem;
+			margin-bottom: 16px;
+			opacity: .4;
+		}
+
+		.saved-empty h3 {
+			font-size: 1rem;
+			color: #6b7280;
+			margin-bottom: 6px;
+		}
+
+		.saved-empty p {
+			font-size: .82rem;
+			margin-bottom: 20px;
+		}
+
+		.saved-empty a {
+			background: linear-gradient(135deg, #6366f1, #8b5cf6);
+			color: #fff;
+			padding: 10px 24px;
+			border-radius: 20px;
+			text-decoration: none;
+			font-size: .85rem;
+			font-weight: 700;
+		}
+
+		/* ── Toast ── */
+		.saved-toast {
+			position: fixed;
+			bottom: 80px;
+			left: 50%;
+			transform: translateX(-50%) translateY(10px);
+			background: #10b981;
+			color: #fff;
+			padding: 9px 20px;
+			border-radius: 20px;
+			font-size: .8rem;
+			font-weight: 600;
+			z-index: 9999;
+			opacity: 0;
+			transition: all .3s;
+			pointer-events: none;
+		}
+
+		.saved-toast.show {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="saved-page">
+
+		<!-- Header -->
+		<div class="saved-header">
+			<h1>
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+					<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+				</svg>
+				Saved Videos
+				<span class="saved-count-pill" id="savedCount" style="display:none">0</span>
+			</h1>
+			<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+				<select id="collectionSelect" class="saved-sort" style="padding:7px 12px;border-radius:20px">
+					<option value="">All</option>
+				</select>
+				<button class="saved-sort" id="sortBtn" onclick="toggleSort()">
+					🕐 Latest First
+				</button>
+			</div>
+		</div>
+
+		<!-- Grid -->
+		<div class="saved-grid" id="savedGrid">
+			<!-- Skeleton -->
+			<div class="sk-saved-grid" id="skeleton" style="display:contents">
+				<div class="sk-saved-card" th:each="i : ${#numbers.sequence(1,6)}">
+					<div class="sk-thumb"></div>
+					<div class="sk-info">
+						<div class="sk-line"></div>
+						<div class="sk-line short"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- Toast -->
+	<div class="saved-toast" id="savedToast"></div>
+
+	<script>
+		var allSaved = [];
+		var sortOrder = 'desc'; // desc = latest first
+		var currentCollection = '';
+
+		function csrf() {return document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';}
+		function csrfH() {return document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';}
+
+		document.addEventListener('DOMContentLoaded', function () {
+			wireCollectionSelect();
+			loadCollections();
+			loadSaved();
+		});
+
+		function wireCollectionSelect() {
+			var sel = document.getElementById('collectionSelect');
+			if (!sel) return;
+			sel.addEventListener('change', function () {
+				currentCollection = sel.value || '';
+				loadSaved();
+			});
+		}
+
+		async function loadCollections() {
+			try {
+				var res = await fetch('/api/bookmarks/collections');
+				var rows = await res.json();
+				var sel = document.getElementById('collectionSelect');
+				if (!sel) return;
+				sel.innerHTML = '';
+				var optAll = document.createElement('option');
+				optAll.value = '';
+				optAll.textContent = 'All';
+				sel.appendChild(optAll);
+
+				(rows || []).forEach(function (r) {
+					// backend returns name="" for uncategorized
+					var name = (r && typeof r.name !== 'undefined') ? String(r.name) : '';
+					var cnt = r && r.count ? Number(r.count) : 0;
+					var o = document.createElement('option');
+					o.value = name;
+					o.textContent = (name && name.trim()) ? (name + ' (' + cnt + ')') : ('Unsorted (' + cnt + ')');
+					sel.appendChild(o);
+				});
+			} catch (e) {
+				// silent
+			}
+		}
+
+		async function loadSaved() {
+			try {
+				var url = '/api/bookmarks';
+				if (currentCollection) url += '?collection=' + encodeURIComponent(currentCollection);
+				var res = await fetch(url);
+				var data = await res.json();
+				allSaved = data || [];
+				renderSaved(allSaved);
+			} catch (e) {
+				document.getElementById('savedGrid').innerHTML =
+					'<div style="color:#f87171;padding:40px;text-align:center">Load nahi hua. Refresh karo.</div>';
+			}
+		}
+
+		function renderSaved(items) {
+			var grid = document.getElementById('savedGrid');
+			grid.innerHTML = '';
+
+			// Update count
+			var pill = document.getElementById('savedCount');
+			if (items.length > 0) {
+				pill.textContent = items.length;
+				pill.style.display = 'inline-block';
+			} else {
+				pill.style.display = 'none';
+			}
+
+			if (!items.length) {
+				grid.innerHTML = [
+					'<div class="saved-empty">',
+					'  <div class="icon">🔖</div>',
+					'  <h3>Koi saved video nahi hai</h3>',
+					'  <p>Reels dekho aur bookmark button dabao</p>',
+					'  <a href="/feed">Feed dekho</a>',
+					'</div>'
+				].join('');
+				return;
+			}
+
+			// Sort
+			var sorted = items.slice().sort(function (a, b) {
+				var da = new Date(a.savedAt), db = new Date(b.savedAt);
+				return sortOrder === 'desc' ? db - da : da - db;
+			});
+
+			sorted.forEach(function (item) {
+				grid.appendChild(buildCard(item));
+			});
+		}
+
+		function buildCard(item) {
+			var card = document.createElement('div');
+			card.className = 'saved-card';
+			card.dataset.postId = item.postId;
+
+			// Video thumbnail
+			var vid = document.createElement('video');
+			vid.muted = true;
+			vid.preload = 'metadata';
+			vid.playsInline = true;
+			var src = document.createElement('source');
+			src.src = item.videoUrl || '';
+			src.type = 'video/mp4';
+			vid.appendChild(src);
+			vid.addEventListener('loadedmetadata', function () {vid.currentTime = 1;});
+			vid.addEventListener('mouseenter', function () {vid.play().catch(function () { });});
+			vid.addEventListener('mouseleave', function () {vid.pause(); vid.currentTime = 1;});
+			vid.addEventListener('error', function () {
+				vid.style.display = 'none';
+				var fb = document.createElement('div');
+				fb.style.cssText = 'width:100%;aspect-ratio:9/16;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#374151;font-size:1.5rem;';
+				fb.textContent = '🎬';
+				card.insertBefore(fb, vid);
+			});
+
+			// Play overlay
+			var playOverlay = document.createElement('div');
+			playOverlay.className = 'saved-play-overlay';
+			playOverlay.textContent = '▶';
+
+			// Saved date badge
+			var dateBadge = document.createElement('div');
+			dateBadge.className = 'saved-date-badge';
+			dateBadge.textContent = fmtDate(item.savedAt);
+
+			// Remove button
+			var removeBtn = document.createElement('button');
+			removeBtn.className = 'saved-remove-btn';
+			removeBtn.title = 'Remove from saved';
+			removeBtn.innerHTML = '✕';
+			removeBtn.addEventListener('click', function (e) {
+				e.stopPropagation();
+				removeBookmark(item.postId, card);
+			});
+
+			// Info
+			var info = document.createElement('div');
+			info.className = 'saved-card-info';
+
+			var caption = document.createElement('div');
+			caption.className = 'saved-card-caption';
+			caption.textContent = item.content || 'Video';
+
+			var meta = document.createElement('div');
+			meta.className = 'saved-card-meta';
+
+			if (item.userAvatar) {
+				var av = document.createElement('img');
+				av.className = 'saved-card-av';
+				av.src = item.userAvatar;
+				av.onerror = function () {av.style.display = 'none';};
+				meta.appendChild(av);
+			}
+			var uname = document.createElement('span');
+			uname.textContent = item.userName || 'User';
+			meta.appendChild(uname);
+
+			info.append(caption, meta);
+			card.append(vid, playOverlay, dateBadge, removeBtn, info);
+
+			// Click to open reel
+			card.addEventListener('click', function () {
+				location.href = '/feed?post=' + item.postId;
+			});
+
+			return card;
+		}
+
+		async function removeBookmark(postId, cardEl) {
+			// Optimistic remove
+			cardEl.style.opacity = '.4';
+			try {
+				var res = await fetch('/api/bookmarks/' + postId, {
+					method: 'POST',
+					headers: {[csrfH()]: csrf()}
+				});
+				var data = await res.json();
+				if (!data.saved) {
+					cardEl.style.animation = 'fadeOut .3s ease forwards';
+					setTimeout(function () {
+						cardEl.remove();
+						// Update count
+						allSaved = allSaved.filter(function (i) {return i.postId != postId;});
+						var pill = document.getElementById('savedCount');
+						if (allSaved.length > 0) {
+							pill.textContent = allSaved.length;
+						} else {
+							pill.style.display = 'none';
+							renderSaved([]);
+						}
+					}, 300);
+					toast('Bookmark remove ho gaya');
+				} else {
+					cardEl.style.opacity = '1';
+				}
+			} catch (e) {
+				cardEl.style.opacity = '1';
+				toast('Remove fail hua. Retry karo.', 'error');
+			}
+		}
+
+		function toggleSort() {
+			sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+			document.getElementById('sortBtn').textContent =
+				sortOrder === 'desc' ? '🕐 Latest First' : '🕐 Oldest First';
+			renderSaved(allSaved);
+		}
+
+		function fmtDate(dateStr) {
+			if (!dateStr) return '';
+			var d = new Date(dateStr);
+			var diff = Math.floor((Date.now() - d) / 86400000);
+			if (diff === 0) return 'Aaj';
+			if (diff === 1) return 'Kal';
+			if (diff < 7) return diff + 'd pehle';
+			return d.toLocaleDateString('hi-IN', {day: 'numeric', month: 'short'});
+		}
+
+		function toast(msg, type) {
+			var t = document.getElementById('savedToast');
+			t.textContent = msg;
+			t.style.background = type === 'error' ? '#f43f5e' : '#10b981';
+			t.classList.add('show');
+			setTimeout(function () {t.classList.remove('show');}, 3000);
+		}
+	</script>
+	<style>
+		@keyframes fadeOut {
+			to {
+				opacity: 0;
+				transform: scale(.9);
+			}
+		}
+	</style>
+</body>
+
+</html>

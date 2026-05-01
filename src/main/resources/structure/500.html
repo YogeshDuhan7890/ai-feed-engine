@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>500 | AI Feed</title>
+	<style>
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			background: #0a0a14;
+			color: #fff;
+			font-family: 'Segoe UI', sans-serif;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			padding: 20px;
+		}
+
+		.wrap {
+			max-width: 480px;
+		}
+
+		.emoji {
+			font-size: 5rem;
+			margin-bottom: 20px;
+			animation: shake 0.5s ease-in-out infinite alternate;
+		}
+
+		@keyframes shake {
+			0% {
+				transform: rotate(-3deg)
+			}
+
+			100% {
+				transform: rotate(3deg)
+			}
+		}
+
+		h1 {
+			font-size: 6rem;
+			font-weight: 900;
+			background: linear-gradient(135deg, #ef4444, #f97316);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			line-height: 1;
+		}
+
+		h2 {
+			font-size: 1.4rem;
+			color: #aaa;
+			margin: 12px 0 8px;
+		}
+
+		p {
+			color: #555;
+			font-size: 0.9rem;
+			margin-bottom: 32px;
+			line-height: 1.6;
+		}
+
+		.btn {
+			display: inline-block;
+			background: linear-gradient(135deg, #4f46e5, #7c3aed);
+			color: #fff;
+			padding: 12px 28px;
+			border-radius: 12px;
+			text-decoration: none;
+			font-weight: 700;
+			font-size: 0.9rem;
+			transition: opacity 0.2s;
+			margin: 6px;
+		}
+
+		.btn:hover {
+			opacity: 0.85;
+		}
+
+		.btn-outline {
+			background: transparent;
+			border: 1.5px solid #333;
+			color: #888;
+		}
+
+		.btn-outline:hover {
+			border-color: #4f46e5;
+			color: #fff;
+		}
+
+		.error-detail {
+			background: #1a1a1a;
+			border: 1px solid #222;
+			border-radius: 8px;
+			padding: 12px 16px;
+			font-size: 0.78rem;
+			color: #555;
+			font-family: monospace;
+			margin-bottom: 24px;
+			text-align: left;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="wrap">
+		<div class="emoji">😵</div>
+		<h1>500</h1>
+		<h2>Kuch toot gaya!</h2>
+		<p>Server mein koi dikkat aa gayi. Hum fix kar rahe hain.<br>Thodi der baad dobara try karo.</p>
+		<div class="error-detail" th:if="${message}" th:text="${message}"></div>
+		<a href="/feed" class="btn">🏠 Feed pe jao</a>
+		<a href="javascript:location.reload()" class="btn btn-outline">🔄 Reload</a>
+	</div>
+</body>
+
+</html>

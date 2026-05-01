@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Alert Configuration — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='alert-config')}"></div>
+	<div class="main-content">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<div>
+				<h4 class="mb-0">🔔 Alert Thresholds</h4>
+			</div>
+			<button class="btn btn-primary btn-sm" onclick="saveConfig()">💾 Save</button>
+		</div>
+		<div class="row g-4">
+			<div class="col-md-6">
+				<div class="card shadow-sm p-4" id="thresholdPanel">
+					<div class="text-muted text-center py-3">Loading...</div>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="card shadow-sm p-4 mb-3">
+					<h6>📊 Current System Status</h6>
+					<div id="currentStatus">
+						<div class="text-muted small">Loading...</div>
+					</div>
+				</div>
+				<div class="card shadow-sm p-4">
+					<h6>📧 Alert Email</h6><input type="email" id="alertEmail" class="form-control mb-2"
+						placeholder="admin@example.com">
+					<div class="form-check"><input type="checkbox" id="alertsEnabled" class="form-check-input"
+							checked><label class="form-check-label small" for="alertsEnabled">Alerts enabled</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-alert-config.js}"></script>
+	<button id="darkModeToggle" onclick="toggleDark()" title="Toggle Dark Mode">🌙</button>
+	<script>
+		function toggleDark() {document.body.classList.toggle('dark-mode'); const d = document.body.classList.contains('dark-mode'); localStorage.setItem('adminDarkMode', d); document.getElementById('darkModeToggle').textContent = d ? '☀️' : '🌙';}
+		if (localStorage.getItem('adminDarkMode') === 'true') {document.body.classList.add('dark-mode'); const b = document.getElementById('darkModeToggle'); if (b) b.textContent = '☀️';}
+	</script>
+</body>
+
+</html>

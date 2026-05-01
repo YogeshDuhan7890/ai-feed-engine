@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Search | AI Feed</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		html,
+		body {
+			background: #07070f;
+			color: #f1f1f8;
+			font-family: 'Segoe UI', sans-serif;
+			margin: 0
+		}
+
+		.search-page {
+			max-width: 760px;
+			margin: 0 auto;
+			padding: 80px 20px 100px
+		}
+
+		/* ── Search Bar ── */
+		.search-bar-wrap {
+			position: relative;
+			margin-bottom: 20px
+		}
+
+		.search-bar-inner {
+			display: flex;
+			align-items: center;
+			gap: 0;
+			background: #0d0d1a;
+			border: 2px solid rgba(255, 255, 255, .08);
+			border-radius: 16px;
+			transition: border-color .2s, box-shadow .2s;
+			overflow: hidden;
+		}
+
+		.search-bar-inner:focus-within {
+			border-color: #6366f1;
+			box-shadow: 0 0 0 4px rgba(99, 102, 241, .12);
+		}
+
+		.search-bar-icon {
+			padding: 0 14px 0 16px;
+			color: #6b7280;
+			display: flex;
+			align-items: center;
+			flex-shrink: 0;
+		}
+
+		#searchInput {
+			flex: 1;
+			background: transparent;
+			border: none;
+			color: #f1f1f8;
+			font-size: .95rem;
+			padding: 14px 0;
+			outline: none;
+			font-family: inherit;
+		}
+
+		#searchInput::placeholder {
+			color: rgba(255, 255, 255, .2)
+		}
+
+		.search-clear-btn {
+			background: none;
+			border: none;
+			color: #6b7280;
+			padding: 0 14px;
+			cursor: pointer;
+			font-size: 1rem;
+			display: none;
+			transition: color .2s;
+		}
+
+		.search-clear-btn:hover {
+			color: #f1f1f8
+		}
+
+		.search-submit-btn {
+			background: linear-gradient(135deg, #6366f1, #8b5cf6);
+			border: none;
+			color: #fff;
+			padding: 10px 18px;
+			margin: 5px;
+			border-radius: 12px;
+			cursor: pointer;
+			font-size: .85rem;
+			font-weight: 700;
+			transition: opacity .2s;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-family: inherit;
+			flex-shrink: 0;
+		}
+
+		.search-submit-btn:hover {
+			opacity: .88
+		}
+
+		/* Suggestions dropdown */
+		#suggestions {
+			position: absolute;
+			top: calc(100% + 6px);
+			left: 0;
+			right: 0;
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 14px;
+			z-index: 100;
+			max-height: 300px;
+			overflow-y: auto;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+			display: none;
+		}
+
+		.sug-item {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 11px 16px;
+			cursor: pointer;
+			transition: background .15s;
+			font-size: .88rem;
+			color: #d1d5db;
+			border-bottom: 1px solid rgba(255, 255, 255, .04);
+		}
+
+		.sug-item:last-child {
+			border-bottom: none
+		}
+
+		.sug-item:hover {
+			background: rgba(255, 255, 255, .05)
+		}
+
+		.sug-item-icon {
+			width: 32px;
+			height: 32px;
+			border-radius: 50%;
+			background: #1a1a2e;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: .9rem;
+			flex-shrink: 0;
+			object-fit: cover;
+		}
+
+		/* ── Tabs ── */
+		.search-tabs {
+			display: flex;
+			gap: 0;
+			border-bottom: 1px solid rgba(255, 255, 255, .07);
+			margin-bottom: 20px;
+		}
+
+		.tab-btn {
+			background: none;
+			border: none;
+			border-bottom: 2px solid transparent;
+			color: #6b7280;
+			padding: 10px 20px;
+			cursor: pointer;
+			font-size: .85rem;
+			font-weight: 600;
+			transition: all .15s;
+			font-family: inherit;
+			display: flex;
+			align-items: center;
+			gap: 7px;
+		}
+
+		.tab-btn:hover {
+			color: #d1d5db
+		}
+
+		.tab-btn.active {
+			color: #f1f1f8;
+			border-bottom-color: #6366f1
+		}
+
+		/* ── Trending section ── */
+		#trendingSection {
+			margin-bottom: 28px
+		}
+
+		.trending-title {
+			font-size: .72rem;
+			font-weight: 700;
+			color: #4b5563;
+			text-transform: uppercase;
+			letter-spacing: .6px;
+			margin-bottom: 12px;
+			display: flex;
+			align-items: center;
+			gap: 7px;
+		}
+
+		.trending-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+			gap: 10px;
+			margin-bottom: 24px;
+		}
+
+		.trending-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 14px;
+			padding: 14px;
+			cursor: pointer;
+			transition: all .2s;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.trending-card:hover {
+			border-color: rgba(99, 102, 241, .3);
+			background: rgba(99, 102, 241, .06);
+			transform: translateY(-2px);
+		}
+
+		.trending-card-icon {
+			width: 36px;
+			height: 36px;
+			border-radius: 10px;
+			background: rgba(99, 102, 241, .12);
+			border: 1px solid rgba(99, 102, 241, .2);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1rem;
+			flex-shrink: 0;
+		}
+
+		.trending-card-name {
+			font-size: .88rem;
+			font-weight: 600;
+			color: #d1d5db
+		}
+
+		.trending-card-count {
+			font-size: .72rem;
+			color: #4b5563;
+			margin-top: 2px
+		}
+
+		/* Recent searches */
+		.recent-title {
+			font-size: .72rem;
+			font-weight: 700;
+			color: #4b5563;
+			text-transform: uppercase;
+			letter-spacing: .6px;
+			margin-bottom: 10px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.clear-recent-btn {
+			background: none;
+			border: none;
+			color: #4b5563;
+			font-size: .72rem;
+			cursor: pointer;
+			font-family: inherit;
+			transition: color .2s;
+		}
+
+		.clear-recent-btn:hover {
+			color: #f43f5e
+		}
+
+		.recent-chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 7px;
+			margin-bottom: 20px
+		}
+
+		.recent-chip {
+			background: rgba(255, 255, 255, .05);
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #9ca3af;
+			padding: 5px 12px;
+			border-radius: 20px;
+			font-size: .78rem;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			transition: all .15s;
+		}
+
+		.recent-chip:hover {
+			background: rgba(255, 255, 255, .09);
+			color: #f1f1f8
+		}
+
+		.recent-chip-rm {
+			color: #4b5563;
+			font-size: .65rem;
+			background: none;
+			border: none;
+			cursor: pointer;
+			padding: 0;
+			line-height: 1;
+		}
+
+		.recent-chip-rm:hover {
+			color: #f43f5e
+		}
+
+		/* ── Results list ── */
+		.results-meta {
+			font-size: .78rem;
+			color: #4b5563;
+			margin-bottom: 12px;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.results-count {
+			color: #818cf8;
+			font-weight: 700
+		}
+
+		/* User card */
+		.result-card {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			padding: 14px 16px;
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .06);
+			border-radius: 14px;
+			margin-bottom: 8px;
+			transition: all .2s;
+			cursor: pointer;
+			text-decoration: none;
+			color: inherit;
+		}
+
+		.result-card:hover {
+			border-color: rgba(255, 255, 255, .12);
+			background: rgba(255, 255, 255, .03);
+			transform: translateX(3px);
+		}
+
+		.result-avatar {
+			width: 48px;
+			height: 48px;
+			border-radius: 50%;
+			object-fit: cover;
+			background: #1a1a2e;
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.3rem;
+		}
+
+		.result-info {
+			flex: 1;
+			min-width: 0
+		}
+
+		.result-name {
+			font-weight: 700;
+			color: #f1f1f8;
+			font-size: .92rem;
+			margin-bottom: 2px
+		}
+
+		.result-sub {
+			color: #6b7280;
+			font-size: .78rem
+		}
+
+		.result-tags {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 4px;
+			margin-top: 5px
+		}
+
+		.result-tag {
+			background: rgba(99, 102, 241, .1);
+			border: 1px solid rgba(99, 102, 241, .2);
+			color: #818cf8;
+			border-radius: 6px;
+			padding: 2px 8px;
+			font-size: .68rem;
+			font-weight: 600;
+		}
+
+		.result-actions {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			flex-shrink: 0
+		}
+
+		.btn-follow {
+			padding: 7px 16px;
+			border-radius: 20px;
+			font-size: .78rem;
+			font-weight: 700;
+			cursor: pointer;
+			transition: all .2s;
+			border: 1.5px solid #6366f1;
+			background: #6366f1;
+			color: #fff;
+			font-family: inherit;
+		}
+
+		.btn-follow.following {
+			background: transparent;
+			color: #6b7280;
+			border-color: rgba(255, 255, 255, .12);
+		}
+
+		.btn-follow:hover {
+			opacity: .85
+		}
+
+		.btn-view {
+			color: #818cf8;
+			font-size: .78rem;
+			text-decoration: none;
+			font-weight: 600;
+			padding: 7px 12px;
+			border-radius: 20px;
+			border: 1px solid rgba(99, 102, 241, .2);
+			transition: all .2s;
+		}
+
+		.btn-view:hover {
+			background: rgba(99, 102, 241, .1)
+		}
+
+		/* Video card */
+		.video-result-card {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			padding: 12px 14px;
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .06);
+			border-radius: 14px;
+			margin-bottom: 8px;
+			cursor: pointer;
+			transition: all .2s;
+		}
+
+		.video-result-card:hover {
+			border-color: rgba(255, 255, 255, .12);
+			background: rgba(255, 255, 255, .03)
+		}
+
+		.video-thumb-wrap {
+			width: 64px;
+			height: 90px;
+			border-radius: 10px;
+			overflow: hidden;
+			background: #1a1a2e;
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: #374151;
+		}
+
+		.video-thumb-wrap video,
+		.video-thumb-wrap img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+		}
+
+		.video-result-info {
+			flex: 1;
+			min-width: 0
+		}
+
+		.video-result-caption {
+			font-size: .88rem;
+			font-weight: 600;
+			color: #e5e7eb;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			margin-bottom: 5px;
+		}
+
+		.video-result-meta {
+			font-size: .75rem;
+			color: #6b7280
+		}
+
+		.video-result-tags {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 4px;
+			margin-top: 5px
+		}
+
+		/* Hashtag card */
+		.hashtag-card {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			padding: 14px 16px;
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .06);
+			border-radius: 14px;
+			margin-bottom: 8px;
+			cursor: pointer;
+			transition: all .2s;
+			text-decoration: none;
+			color: inherit;
+		}
+
+		.hashtag-card:hover {
+			border-color: rgba(99, 102, 241, .3);
+			background: rgba(99, 102, 241, .05)
+		}
+
+		.hashtag-icon-wrap {
+			width: 46px;
+			height: 46px;
+			border-radius: 14px;
+			background: linear-gradient(135deg, rgba(99, 102, 241, .15), rgba(139, 92, 246, .1));
+			border: 1px solid rgba(99, 102, 241, .2);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.3rem;
+			font-weight: 800;
+			color: #818cf8;
+			flex-shrink: 0;
+		}
+
+		.hashtag-name {
+			font-weight: 700;
+			color: #f1f1f8;
+			font-size: .95rem;
+			margin-bottom: 2px
+		}
+
+		.hashtag-count {
+			font-size: .78rem;
+			color: #6b7280
+		}
+
+		/* ── Loading ── */
+		.search-loading {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			padding: 8px 0;
+		}
+
+		.sk-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .05);
+			border-radius: 14px;
+			padding: 14px;
+			display: flex;
+			gap: 14px;
+			align-items: center;
+		}
+
+		.sk-av {
+			width: 48px;
+			height: 48px;
+			border-radius: 50%;
+			background: #111122;
+			flex-shrink: 0;
+			animation: skPulse 1.4s infinite;
+		}
+
+		.sk-lines {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 7px
+		}
+
+		.sk-l {
+			height: 11px;
+			border-radius: 6px;
+			background: #111122;
+			animation: skPulse 1.4s infinite
+		}
+
+		.sk-l.s {
+			width: 45%
+		}
+
+		@keyframes skPulse {
+
+			0%,
+			100% {
+				opacity: .3
+			}
+
+			50% {
+				opacity: .7
+			}
+		}
+
+		/* ── Empty / Error ── */
+		.search-empty {
+			text-align: center;
+			padding: 60px 20px;
+			color: #374151
+		}
+
+		.search-empty .se-icon {
+			font-size: 3rem;
+			margin-bottom: 14px;
+			opacity: .5;
+		}
+
+		.search-empty h3 {
+			font-size: 1rem;
+			color: #6b7280;
+			margin-bottom: 6px
+		}
+
+		.search-empty p {
+			font-size: .82rem
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="search-page">
+
+		<!-- Search Bar -->
+		<div class="search-bar-wrap">
+			<div class="search-bar-inner">
+				<div class="search-bar-icon">
+					<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+						stroke-width="2.5">
+						<circle cx="11" cy="11" r="8" />
+						<path d="m21 21-4.35-4.35" />
+					</svg>
+				</div>
+				<input id="searchInput" type="text" placeholder="Users, videos, hashtags search karo..."
+					autocomplete="off" autofocus oninput="onSearchInput(this.value)"
+					onkeydown="if(event.key==='Enter')doSearch(this.value)">
+				<button class="search-clear-btn" id="clearBtn" onclick="clearSearch()">✕</button>
+				<button class="search-submit-btn" onclick="doSearch(document.getElementById('searchInput').value)">
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+						stroke-width="2.5">
+						<circle cx="11" cy="11" r="8" />
+						<path d="m21 21-4.35-4.35" />
+					</svg>
+					Search
+				</button>
+			</div>
+			<div id="suggestions"></div>
+		</div>
+
+		<!-- Tabs -->
+		<div class="search-tabs">
+			<button class="tab-btn active" data-tab="users" onclick="switchTab('users',this)">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+					<circle cx="9" cy="7" r="4" />
+					<path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+					<path d="M16 3.13a4 4 0 0 1 0 7.75" />
+				</svg>
+				Users
+			</button>
+			<button class="tab-btn" data-tab="videos" onclick="switchTab('videos',this)">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<polygon points="23 7 16 12 23 17 23 7" />
+					<rect x="1" y="5" width="15" height="14" rx="2" />
+				</svg>
+				Videos
+			</button>
+			<button class="tab-btn" data-tab="hashtags" onclick="switchTab('hashtags',this)">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="4" y1="9" x2="20" y2="9" />
+					<line x1="4" y1="15" x2="20" y2="15" />
+					<line x1="10" y1="3" x2="8" y2="21" />
+					<line x1="16" y1="3" x2="14" y2="21" />
+				</svg>
+				Hashtags
+			</button>
+		</div>
+
+		<!-- Trending + Recent (shown when no search) -->
+		<div id="trendingSection">
+			<!-- Recent searches -->
+			<div id="recentSection" style="display:none">
+				<div class="recent-title">
+					🕐 Recent Searches
+					<button class="clear-recent-btn" onclick="clearRecent()">Sab hatao</button>
+				</div>
+				<div class="recent-chips" id="recentChips"></div>
+			</div>
+
+			<!-- Trending hashtags -->
+			<div class="trending-title">
+				<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+					<polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+					<polyline points="17 6 23 6 23 12" />
+				</svg>
+				Trending
+			</div>
+			<div class="trending-grid" id="trendingChips">
+				<div class="trending-card" onclick="quickSearch('#viral')">
+					<div class="trending-card-icon">🔥</div>
+					<div>
+						<div class="trending-card-name">#viral</div>
+						<div class="trending-card-count">Trending</div>
+					</div>
+				</div>
+				<div class="trending-card" onclick="quickSearch('#trending')">
+					<div class="trending-card-icon">📈</div>
+					<div>
+						<div class="trending-card-name">#trending</div>
+						<div class="trending-card-count">Trending</div>
+					</div>
+				</div>
+				<div class="trending-card" onclick="quickSearch('#music')">
+					<div class="trending-card-icon">🎵</div>
+					<div>
+						<div class="trending-card-name">#music</div>
+						<div class="trending-card-count">Trending</div>
+					</div>
+				</div>
+				<div class="trending-card" onclick="quickSearch('#dance')">
+					<div class="trending-card-icon">💃</div>
+					<div>
+						<div class="trending-card-name">#dance</div>
+						<div class="trending-card-count">Trending</div>
+					</div>
+				</div>
+				<div class="trending-card" onclick="quickSearch('#funny')">
+					<div class="trending-card-icon">😂</div>
+					<div>
+						<div class="trending-card-name">#funny</div>
+						<div class="trending-card-count">Trending</div>
+					</div>
+				</div>
+				<div class="trending-card" onclick="quickSearch('#food')">
+					<div class="trending-card-icon">🍔</div>
+					<div>
+						<div class="trending-card-name">#food</div>
+						<div class="trending-card-count">Trending</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Loading -->
+		<div id="spinner" style="display:none">
+			<div class="search-loading">
+				<div class="sk-card" th:each="i : ${#numbers.sequence(1,4)}">
+					<div class="sk-av"></div>
+					<div class="sk-lines">
+						<div class="sk-l"></div>
+						<div class="sk-l s"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Results -->
+		<div id="resultsMeta" style="display:none" class="results-meta">
+			<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2">
+				<circle cx="11" cy="11" r="8" />
+				<path d="m21 21-4.35-4.35" />
+			</svg>
+			<span id="resultsCountText"></span>
+		</div>
+		<div id="results"></div>
+
+	</div>
+
+	<script th:src="@{/js/search.js}"></script>
+	<script>
+		// ── Recent searches ──────────────────────────────────
+		const RECENT_KEY = 'ai_feed_recent_searches'
+
+		function getRecent() {
+			try {return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]')} catch {return []}
+		}
+		function addRecent(q) {
+			if (!q?.trim()) return
+			const arr = getRecent().filter(x => x !== q)
+			arr.unshift(q)
+			localStorage.setItem(RECENT_KEY, JSON.stringify(arr.slice(0, 8)))
+			renderRecent()
+		}
+		function removeRecent(q) {
+			localStorage.setItem(RECENT_KEY, JSON.stringify(getRecent().filter(x => x !== q)))
+			renderRecent()
+		}
+		function clearRecent() {
+			localStorage.removeItem(RECENT_KEY)
+			document.getElementById('recentSection').style.display = 'none'
+		}
+		function renderRecent() {
+			const arr = getRecent()
+			const sec = document.getElementById('recentSection')
+			const chips = document.getElementById('recentChips')
+			if (!arr.length) {sec.style.display = 'none'; return }
+			sec.style.display = 'block'
+			chips.innerHTML = arr.map(q => `
+    <span class="recent-chip" onclick="quickSearch('${esc(q)}')">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      ${esc(q)}
+      <button class="recent-chip-rm" onclick="event.stopPropagation();removeRecent('${esc(q)}')">✕</button>
+    </span>`).join('')
+		}
+
+		// ── Override doSearch to add recent + results meta ───
+		const _origDoSearch = window.doSearch
+		window.doSearch = async function (q) {
+			if (!q?.trim()) return
+			addRecent(q)
+			// Show clear btn
+			const cb = document.getElementById('clearBtn')
+			if (cb) cb.style.display = 'block'
+			// Hide results meta
+			document.getElementById('resultsMeta').style.display = 'none'
+			if (_origDoSearch) await _origDoSearch(q)
+			// Show results count
+			const results = document.getElementById('results')
+			const count = results?.querySelectorAll('.result-card, .video-result-card, .hashtag-card').length || 0
+			if (count > 0) {
+				document.getElementById('resultsMeta').style.display = 'flex'
+				document.getElementById('resultsCountText').innerHTML =
+					`<span class="results-count">${count}</span> result${count !== 1 ? 's' : ''} mila`
+			}
+		}
+
+		function clearSearch() {
+			const inp = document.getElementById('searchInput')
+			if (inp) inp.value = ''
+			document.getElementById('clearBtn').style.display = 'none'
+			document.getElementById('resultsMeta').style.display = 'none'
+			document.getElementById('results').innerHTML = ''
+			if (window.showTrending) showTrending()
+			inp?.focus()
+		}
+
+		function esc(s) {
+			return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+		}
+
+		// Init recent
+		document.addEventListener('DOMContentLoaded', renderRecent)
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login OTP | AI Feed</title>
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			background: #0a0a14;
+			font-family: 'Segoe UI', sans-serif;
+			color: #f5f5ff;
+		}
+		.card {
+			width: 100%;
+			max-width: 420px;
+			background: #111;
+			border: 1px solid #1e1e2f;
+			border-radius: 20px;
+			padding: 32px 28px;
+			box-shadow: 0 24px 80px rgba(0, 0, 0, .55);
+		}
+		h1 {
+			margin: 0 0 8px;
+			font-size: 1.5rem;
+			font-weight: 800;
+		}
+		p {
+			margin: 0 0 18px;
+			color: #9ca3af;
+			font-size: .9rem;
+			line-height: 1.6;
+		}
+		.email-chip {
+			display: inline-block;
+			margin-bottom: 18px;
+			padding: 8px 12px;
+			border-radius: 999px;
+			background: rgba(79, 70, 229, .12);
+			border: 1px solid rgba(79, 70, 229, .35);
+			color: #c7d2fe;
+			font-size: .82rem;
+		}
+		input {
+			width: 100%;
+			padding: 14px 16px;
+			border-radius: 12px;
+			border: 1px solid #2a2a3f;
+			background: #171727;
+			color: #fff;
+			font-size: 1.2rem;
+			letter-spacing: 10px;
+			text-align: center;
+			outline: none;
+		}
+		input:focus {
+			border-color: #4f46e5;
+		}
+		.row {
+			display: flex;
+			gap: 10px;
+			margin-top: 16px;
+		}
+		button {
+			flex: 1;
+			padding: 12px 14px;
+			border-radius: 12px;
+			border: none;
+			cursor: pointer;
+			font-weight: 700;
+			font-size: .9rem;
+		}
+		.primary {
+			background: linear-gradient(135deg, #4f46e5, #7c3aed);
+			color: #fff;
+		}
+		.secondary {
+			background: transparent;
+			border: 1px solid #30304a;
+			color: #cbd5e1;
+		}
+		.alert {
+			display: none;
+			margin-top: 14px;
+			padding: 11px 14px;
+			border-radius: 10px;
+			font-size: .85rem;
+		}
+		.alert.success {
+			display: block;
+			background: rgba(34, 197, 94, .12);
+			border: 1px solid #22c55e;
+			color: #86efac;
+		}
+		.alert.error {
+			display: block;
+			background: rgba(239, 68, 68, .12);
+			border: 1px solid #ef4444;
+			color: #fca5a5;
+		}
+		.note {
+			margin-top: 14px;
+			font-size: .8rem;
+			color: #6b7280;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<div class="card">
+		<h1>Login OTP</h1>
+		<p>Email par bheja gaya 6 digit OTP enter karo. Verification ke baad hi account open hoga.</p>
+		<div class="email-chip" th:text="${otpEmail} ?: 'Email loading...'"></div>
+		<input id="otpInput" type="text" maxlength="6" placeholder="123456" autocomplete="one-time-code">
+		<div class="row">
+			<button class="primary" onclick="verifyOtp()">Verify OTP</button>
+			<button class="secondary" onclick="resendOtp()">Resend OTP</button>
+		</div>
+		<div id="otpAlert" class="alert"></div>
+		<div class="note">Agar OTP nahi aaya to resend karke dobara try karo.</div>
+	</div>
+
+	<script>
+		function showAlert(message, type) {
+			const box = document.getElementById('otpAlert')
+			box.className = 'alert ' + type
+			box.textContent = message
+		}
+
+		async function verifyOtp() {
+			const otp = document.getElementById('otpInput').value.trim()
+			if (otp.length !== 6) {
+				showAlert('6 digit OTP daalo', 'error')
+				return
+			}
+
+			const res = await fetch('/api/account/login-2fa/verify', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ otp })
+			})
+			const data = await res.json()
+			if (!res.ok || data.success === false) {
+				showAlert(data.message || 'OTP verify nahi hua', 'error')
+				return
+			}
+
+			showAlert(data.message || 'OTP verify ho gaya', 'success')
+			window.location.href = data.redirect || '/feed'
+		}
+
+		async function resendOtp() {
+			const res = await fetch('/api/account/login-2fa/resend', { method: 'POST' })
+			const data = await res.json()
+			showAlert(data.message || 'Naya OTP bhej diya', res.ok && data.success !== false ? 'success' : 'error')
+		}
+	</script>
+</body>
+</html>

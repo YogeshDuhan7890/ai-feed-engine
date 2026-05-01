@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Creator Studio | AI Feed</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		* {
+			box-sizing: border-box
+		}
+
+		body {
+			background: #07070f;
+			color: #f1f1f8;
+			font-family: 'Segoe UI', sans-serif;
+			margin: 0
+		}
+
+		.studio-wrap {
+			max-width: 1000px;
+			margin: 0 auto;
+			padding: 80px 20px 100px
+		}
+
+		/* ── Page header ── */
+		.page-header {
+			margin-bottom: 28px
+		}
+
+		.page-header h1 {
+			font-size: 1.6rem;
+			font-weight: 800;
+			margin-bottom: 4px;
+			display: flex;
+			align-items: center;
+			gap: 10px
+		}
+
+		.page-header p {
+			color: #6b7280;
+			font-size: .88rem
+		}
+
+		/* ── Stats cards ── */
+		.stats-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+			gap: 14px;
+			margin-bottom: 24px
+		}
+
+		.stat-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 16px;
+			padding: 20px;
+			transition: border-color .2s
+		}
+
+		.stat-card:hover {
+			border-color: rgba(99, 102, 241, .3)
+		}
+
+		.stat-card .sc-icon {
+			font-size: 1.8rem;
+			margin-bottom: 10px
+		}
+
+		.stat-card .sc-val {
+			font-size: 1.6rem;
+			font-weight: 800;
+			color: #f1f1f8;
+			margin-bottom: 3px
+		}
+
+		.stat-card .sc-lbl {
+			font-size: .75rem;
+			color: #6b7280;
+			font-weight: 500;
+			text-transform: uppercase;
+			letter-spacing: .4px
+		}
+
+		.stat-card.green .sc-val {
+			color: #10b981
+		}
+
+		.stat-card.purple .sc-val {
+			color: #818cf8
+		}
+
+		.stat-card.yellow .sc-val {
+			color: #f59e0b
+		}
+
+		.stat-card.pink .sc-val {
+			color: #f472b6
+		}
+
+		/* ── 2-col layout ── */
+		.studio-layout {
+			display: grid;
+			grid-template-columns: 1fr 340px;
+			gap: 20px
+		}
+
+		@media(max-width:768px) {
+			.studio-layout {
+				grid-template-columns: 1fr
+			}
+		}
+
+		/* ── Sections ── */
+		.section {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 16px;
+			padding: 22px;
+			margin-bottom: 16px
+		}
+
+		.section h3 {
+			font-size: .95rem;
+			font-weight: 700;
+			margin-bottom: 16px;
+			display: flex;
+			align-items: center;
+			gap: 8px
+		}
+
+		/* ── Tier card ── */
+		.tier-card {
+			background: linear-gradient(135deg, #0f0f2e, #1e1040, #2d1b69);
+			border: 1px solid rgba(99, 102, 241, .3);
+			border-radius: 16px;
+			padding: 22px;
+			margin-bottom: 16px;
+			position: relative;
+			overflow: hidden
+		}
+
+		.tier-card::before {
+			content: '';
+			position: absolute;
+			top: -40px;
+			right: -40px;
+			width: 140px;
+			height: 140px;
+			background: radial-gradient(circle, rgba(99, 102, 241, .2), transparent);
+			border-radius: 50%
+		}
+
+		.tier-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			padding: 5px 14px;
+			border-radius: 24px;
+			font-size: .78rem;
+			font-weight: 800;
+			letter-spacing: .5px;
+			margin-bottom: 12px
+		}
+
+		.tier-NONE .tier-badge {
+			background: rgba(107, 114, 128, .2);
+			color: #9ca3af;
+			border: 1px solid rgba(107, 114, 128, .3)
+		}
+
+		.tier-RISING .tier-badge {
+			background: rgba(245, 158, 11, .15);
+			color: #fbbf24;
+			border: 1px solid rgba(245, 158, 11, .3)
+		}
+
+		.tier-PRO .tier-badge {
+			background: rgba(99, 102, 241, .2);
+			color: #818cf8;
+			border: 1px solid rgba(99, 102, 241, .3)
+		}
+
+		.tier-ELITE .tier-badge {
+			background: rgba(244, 63, 94, .15);
+			color: #fb7185;
+			border: 1px solid rgba(244, 63, 94, .3)
+		}
+
+		.tier-name {
+			font-size: 1.2rem;
+			font-weight: 800;
+			margin-bottom: 4px
+		}
+
+		.tier-desc {
+			font-size: .82rem;
+			color: #9ca3af;
+			margin-bottom: 14px
+		}
+
+		.tier-progress-wrap {
+			margin-top: 8px
+		}
+
+		.tier-progress-label {
+			display: flex;
+			justify-content: space-between;
+			font-size: .72rem;
+			color: #6b7280;
+			margin-bottom: 5px
+		}
+
+		.tier-progress-bar {
+			height: 6px;
+			background: rgba(255, 255, 255, .07);
+			border-radius: 3px;
+			overflow: hidden
+		}
+
+		.tier-progress-fill {
+			height: 100%;
+			background: linear-gradient(90deg, #6366f1, #a855f7);
+			border-radius: 3px;
+			transition: width .5s ease
+		}
+
+		/* ── Enable monetization ── */
+		.enable-card {
+			border: 2px dashed rgba(99, 102, 241, .3);
+			border-radius: 16px;
+			padding: 28px;
+			text-align: center;
+			margin-bottom: 16px
+		}
+
+		.enable-card .ec-icon {
+			font-size: 3.5rem;
+			margin-bottom: 12px
+		}
+
+		.enable-card h3 {
+			font-size: 1.1rem;
+			font-weight: 800;
+			margin-bottom: 8px
+		}
+
+		.enable-card p {
+			font-size: .85rem;
+			color: #6b7280;
+			margin-bottom: 20px;
+			line-height: 1.6
+		}
+
+		.requirement-list {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			margin-bottom: 20px;
+			text-align: left
+		}
+
+		.req-item {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			font-size: .85rem;
+			padding: 8px 14px;
+			background: rgba(255, 255, 255, .04);
+			border-radius: 10px
+		}
+
+		.req-item .req-icon {
+			font-size: 1rem;
+			flex-shrink: 0
+		}
+
+		.req-item.met {
+			color: #10b981
+		}
+
+		.req-item.unmet {
+			color: #6b7280
+		}
+
+		.form-row {
+			display: flex;
+			gap: 10px;
+			max-width: 400px;
+			margin: 0 auto
+		}
+
+		.form-row input {
+			flex: 1;
+			background: rgba(255, 255, 255, .06);
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 12px;
+			padding: 10px 14px;
+			color: #f1f1f8;
+			font-size: .88rem;
+			outline: none;
+			transition: border-color .2s
+		}
+
+		.form-row input:focus {
+			border-color: #6366f1
+		}
+
+		.enable-btn {
+			background: linear-gradient(135deg, #6366f1, #8b5cf6);
+			color: #fff;
+			border: none;
+			padding: 11px 24px;
+			border-radius: 24px;
+			font-size: .88rem;
+			font-weight: 700;
+			cursor: pointer;
+			transition: all .2s;
+			box-shadow: 0 4px 15px rgba(99, 102, 241, .3);
+			white-space: nowrap
+		}
+
+		.enable-btn:hover {
+			opacity: .88;
+			transform: translateY(-1px)
+		}
+
+		.enable-btn:disabled {
+			opacity: .4;
+			cursor: not-allowed;
+			transform: none
+		}
+
+		/* ── Earnings rates ── */
+		.rates-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px
+		}
+
+		.rate-item {
+			background: rgba(255, 255, 255, .04);
+			border-radius: 10px;
+			padding: 12px;
+			text-align: center
+		}
+
+		.rate-item .ri-val {
+			font-size: 1.1rem;
+			font-weight: 800;
+			color: #818cf8
+		}
+
+		.rate-item .ri-lbl {
+			font-size: .72rem;
+			color: #6b7280;
+			margin-top: 3px
+		}
+
+		/* ── Transactions ── */
+		.tx-list {
+			display: flex;
+			flex-direction: column;
+			gap: 8px
+		}
+
+		.tx-row {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 10px 12px;
+			background: rgba(255, 255, 255, .03);
+			border-radius: 10px;
+			transition: background .15s
+		}
+
+		.tx-row:hover {
+			background: rgba(255, 255, 255, .06)
+		}
+
+		.tx-icon {
+			font-size: 1.3rem;
+			flex-shrink: 0
+		}
+
+		.tx-info {
+			flex: 1;
+			min-width: 0
+		}
+
+		.tx-desc {
+			font-size: .82rem;
+			color: #d1d5db;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis
+		}
+
+		.tx-time {
+			font-size: .7rem;
+			color: #4b5563;
+			margin-top: 1px
+		}
+
+		.tx-amount {
+			font-size: .9rem;
+			font-weight: 700;
+			flex-shrink: 0
+		}
+
+		.tx-amount.positive {
+			color: #10b981
+		}
+
+		.tx-amount.negative {
+			color: #f87171
+		}
+
+		/* ── Withdrawal ── */
+		.balance-display {
+			text-align: center;
+			padding: 16px;
+			background: rgba(16, 185, 129, .08);
+			border: 1px solid rgba(16, 185, 129, .2);
+			border-radius: 12px;
+			margin-bottom: 16px
+		}
+
+		.balance-display .bd-val {
+			font-size: 2rem;
+			font-weight: 800;
+			color: #10b981
+		}
+
+		.balance-display .bd-lbl {
+			font-size: .75rem;
+			color: #6b7280;
+			margin-top: 4px
+		}
+
+		.withdraw-form {
+			display: flex;
+			flex-direction: column;
+			gap: 12px
+		}
+
+		.withdraw-form label {
+			font-size: .72rem;
+			color: #6b7280;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .4px;
+			margin-bottom: 3px;
+			display: block
+		}
+
+		.withdraw-form input {
+			background: rgba(255, 255, 255, .05);
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 10px;
+			padding: 10px 14px;
+			color: #f1f1f8;
+			font-size: .9rem;
+			outline: none;
+			transition: border-color .2s;
+			width: 100%
+		}
+
+		.withdraw-form input:focus {
+			border-color: #10b981
+		}
+
+		.withdraw-btn {
+			background: linear-gradient(135deg, #10b981, #059669);
+			color: #fff;
+			border: none;
+			padding: 12px;
+			border-radius: 12px;
+			font-size: .9rem;
+			font-weight: 700;
+			cursor: pointer;
+			transition: all .2s;
+			width: 100%
+		}
+
+		.withdraw-btn:hover {
+			opacity: .88
+		}
+
+		.withdraw-btn:disabled {
+			opacity: .4;
+			cursor: not-allowed
+		}
+
+		/* ── Withdrawal history ── */
+		.w-status {
+			padding: 3px 10px;
+			border-radius: 20px;
+			font-size: .7rem;
+			font-weight: 700;
+			flex-shrink: 0
+		}
+
+		.w-status.PENDING {
+			background: rgba(245, 158, 11, .15);
+			color: #fbbf24
+		}
+
+		.w-status.COMPLETED {
+			background: rgba(16, 185, 129, .15);
+			color: #34d399
+		}
+
+		.w-status.REJECTED {
+			background: rgba(244, 63, 94, .15);
+			color: #f87171
+		}
+
+		.w-status.APPROVED {
+			background: rgba(99, 102, 241, .15);
+			color: #818cf8
+		}
+
+		/* ── Alert ── */
+		.alert {
+			padding: 10px 14px;
+			border-radius: 10px;
+			font-size: .83rem;
+			margin-bottom: 14px;
+			display: none
+		}
+
+		.alert-success {
+			background: rgba(16, 185, 129, .12);
+			border: 1px solid #10b981;
+			color: #6ee7b7
+		}
+
+		.alert-error {
+			background: rgba(244, 63, 94, .12);
+			border: 1px solid #f43f5e;
+			color: #fca5a5
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="studio-wrap">
+
+		<div class="page-header">
+			<h1>💰 Creator Studio</h1>
+			<p>Apni earnings track karo, paise withdraw karo</p>
+		</div>
+
+		<div id="mainAlert" class="alert"></div>
+
+		<!-- Stats Row -->
+		<div class="stats-grid" id="statsGrid">
+			<div class="stat-card green">
+				<div class="sc-icon">💰</div>
+				<div class="sc-val" id="statTotal">₹0</div>
+				<div class="sc-lbl">Total Earnings</div>
+			</div>
+			<div class="stat-card purple">
+				<div class="sc-icon">💳</div>
+				<div class="sc-val" id="statAvailable">₹0</div>
+				<div class="sc-lbl">Available Balance</div>
+			</div>
+			<div class="stat-card yellow">
+				<div class="sc-icon">📤</div>
+				<div class="sc-val" id="statWithdrawn">₹0</div>
+				<div class="sc-lbl">Total Withdrawn</div>
+			</div>
+			<div class="stat-card pink">
+				<div class="sc-icon">🎬</div>
+				<div class="sc-val" id="statVideos">0</div>
+				<div class="sc-lbl">Total Videos</div>
+			</div>
+		</div>
+
+		<div class="studio-layout">
+			<div>
+				<!-- Enable Monetization / Tier card -->
+				<div id="enableSection"></div>
+
+				<!-- Earning Rates -->
+				<div class="section">
+					<h3>📊 Earning Rates</h3>
+					<div class="rates-grid">
+						<div class="rate-item">
+							<div class="ri-val">₹10</div>
+							<div class="ri-lbl">Per 1000 Views</div>
+						</div>
+						<div class="rate-item">
+							<div class="ri-val">₹0.05</div>
+							<div class="ri-lbl">Per Like</div>
+						</div>
+						<div class="rate-item">
+							<div class="ri-val">₹0.20</div>
+							<div class="ri-lbl">Per Share</div>
+						</div>
+						<div class="rate-item">
+							<div class="ri-val">₹50–₹1000</div>
+							<div class="ri-lbl">Tier Bonuses</div>
+						</div>
+					</div>
+					<p style="font-size:.75rem;color:#4b5563;margin-top:12px;line-height:1.5">
+						Earnings automatically credit hoti hain jab viewers aapki videos dekhte, like karte ya share
+						karte hain.
+					</p>
+				</div>
+
+				<!-- Recent Transactions -->
+				<div class="section">
+					<h3>🧾 Recent Transactions</h3>
+					<div class="tx-list" id="txList">
+						<div style="text-align:center;color:#4b5563;padding:20px;font-size:.85rem">Loading...</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Right column -->
+			<div>
+				<!-- Withdrawal -->
+				<div class="section" id="withdrawSection" style="display:none">
+					<h3>💸 Withdraw</h3>
+					<div class="balance-display">
+						<div class="bd-val" id="withdrawBalance">₹0</div>
+						<div class="bd-lbl">Available Balance</div>
+					</div>
+					<div class="withdraw-form">
+						<div>
+							<label>Amount (Min ₹100)</label>
+							<input type="number" id="withdrawAmount" placeholder="₹100" min="100" step="10">
+						</div>
+						<div>
+							<label>UPI ID</label>
+							<input type="text" id="withdrawUpi" placeholder="yourname@upi" readonly
+								style="background:rgba(255,255,255,.03);cursor:not-allowed">
+						</div>
+						<button class="withdraw-btn" id="withdrawBtn" onclick="requestWithdrawal()">
+							💸 Withdraw Karo
+						</button>
+					</div>
+					<p style="font-size:.72rem;color:#4b5563;margin-top:10px;line-height:1.5">
+						2-3 working days mein UPI pe transfer ho jaata hai
+					</p>
+				</div>
+
+				<!-- Withdrawal History -->
+				<div class="section">
+					<h3>📋 Withdrawal History</h3>
+					<div id="withdrawHistory">
+						<div style="text-align:center;color:#4b5563;padding:20px;font-size:.85rem">Koi withdrawal nahi
+							abhi</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Earnings Chart Section -->
+	<div class="section" id="chartSection" style="margin-top:20px;display:none">
+		<h3>📈 Earnings Trend (Last 30 Days)</h3>
+		<canvas id="earningsChart" height="120"></canvas>
+	</div>
+
+	<!-- Per-Post Earnings + Leaderboard row -->
+	<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px" id="extraSections"
+		class="extra-grid">
+		<div class="section">
+			<h3>🎬 Top Earning Videos</h3>
+			<div id="postEarningsList">
+				<div style="text-align:center;color:#4b5563;padding:20px;font-size:.82rem">Loading...</div>
+			</div>
+		</div>
+		<div class="section">
+			<h3>🏆 Creator Leaderboard</h3>
+			<div id="leaderboardList">
+				<div style="text-align:center;color:#4b5563;padding:20px;font-size:.82rem">Loading...</div>
+			</div>
+		</div>
+	</div>
+	</div>
+
+	<style>
+		@media(max-width:640px) {
+			.extra-grid {
+				grid-template-columns: 1fr !important
+			}
+		}
+	</style>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+	<script>
+		function csrf() {
+			const t = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || ''
+			const h = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN'
+			return {[h]: t, 'Content-Type': 'application/json'}
+		}
+
+		function fmt(val) {
+			return '₹' + parseFloat(val || 0).toFixed(2)
+		}
+
+		const TX_ICONS = {
+			VIEW_REWARD: '👁', LIKE_BONUS: '❤️', SHARE_BONUS: '↗️',
+			MILESTONE_BONUS: '🏆', WITHDRAWAL: '💸', SUBSCRIPTION: '⭐'
+		}
+
+		const TIER_INFO = {
+			NONE: {icon: '🌱', name: 'Starter', desc: 'Monetization enable karo'},
+			RISING: {icon: '⭐', name: 'Rising Star', desc: '₹2000 tak pahuncho → PRO bano'},
+			PRO: {icon: '💎', name: 'Pro Creator', desc: '₹10000 tak pahuncho → ELITE bano'},
+			ELITE: {icon: '👑', name: 'Elite', desc: 'Highest tier! Maximum earnings'}
+		}
+
+		async function loadDashboard() {
+			try {
+				const res = await fetch('/api/monetization/dashboard')
+				const d = await res.json()
+
+				// Stats
+				document.getElementById('statTotal').textContent = fmt(d.totalEarnings)
+				document.getElementById('statAvailable').textContent = fmt(d.availableBalance)
+				document.getElementById('statWithdrawn').textContent = fmt(d.totalWithdrawn)
+				document.getElementById('statVideos').textContent = d.videoCount
+
+				// Enable section
+				renderEnableSection(d)
+
+				// Transactions
+				renderTransactions(d.recentTransactions)
+
+				// Withdrawal
+				if (d.monetizationEnabled) {
+					document.getElementById('withdrawSection').style.display = 'block'
+					document.getElementById('withdrawBalance').textContent = fmt(d.availableBalance)
+					document.getElementById('withdrawUpi').value = d.upiId || ''
+				}
+
+				// Withdrawal history
+				renderWithdrawHistory(d.withdrawals)
+
+			} catch (e) {
+				console.error('Dashboard load fail:', e)
+			}
+		}
+
+		function renderEnableSection(d) {
+			const el = document.getElementById('enableSection')
+
+			if (d.monetizationEnabled) {
+				// Show tier card
+				const tier = d.tierProgress
+				const info = TIER_INFO[tier.current] || TIER_INFO.NONE
+				el.innerHTML = `
+      <div class="tier-card tier-${tier.current}">
+        <div class="tier-badge">${info.icon} ${info.name}</div>
+        <div style="font-size:.85rem;color:#9ca3af;margin-bottom:14px">${info.desc}</div>
+        ${tier.current !== 'ELITE' ? `
+        <div class="tier-progress-wrap">
+          <div class="tier-progress-label">
+            <span>₹${parseFloat(tier.total).toFixed(0)} earned</span>
+            <span>₹${parseFloat(tier.nextThreshold).toFixed(0)} for ${tier.next}</span>
+          </div>
+          <div class="tier-progress-bar">
+            <div class="tier-progress-fill" style="width:${tier.progressPct}%"></div>
+          </div>
+        </div>` : '<div style="font-size:.9rem;color:#fb7185;font-weight:700">🏆 Maximum tier! Congratulations!</div>'}
+      </div>`
+			} else {
+				// Show enable card
+				const videosMet = d.videoCount >= 10
+				el.innerHTML = `
+      <div class="enable-card">
+        <div class="ec-icon">💰</div>
+        <h3>Monetization Enable Karo</h3>
+        <p>Apni videos se paise kamao — views, likes aur shares pe earnings milegi</p>
+        <div class="requirement-list">
+          <div class="req-item ${videosMet ? 'met' : 'unmet'}">
+            <span class="req-icon">${videosMet ? '✅' : '⏳'}</span>
+            <span>10+ videos chahiye (aapke paas: ${d.videoCount})</span>
+          </div>
+          <div class="req-item met">
+            <span class="req-icon">✅</span>
+            <span>Active account</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <input type="text" id="upiInput" placeholder="UPI ID daalo (eg: name@upi)"
+                 ${!videosMet ? 'disabled' : ''}>
+          <button class="enable-btn" onclick="enableMonetization()"
+                  ${!videosMet ? 'disabled' : ''}>
+            Enable 🚀
+          </button>
+        </div>
+        ${!videosMet ? `<p style="font-size:.75rem;color:#f59e0b;margin-top:10px">
+          ${d.videosNeeded} aur videos upload karo</p>` : ''}
+      </div>`
+			}
+		}
+
+		function renderTransactions(txs) {
+			const el = document.getElementById('txList')
+			if (!txs?.length) {
+				el.innerHTML = '<div style="text-align:center;color:#4b5563;padding:20px;font-size:.85rem">Abhi koi transaction nahi</div>'
+				return
+			}
+			el.innerHTML = ''
+			txs.slice(0, 20).forEach(t => {
+				const isPositive = t.amount > 0
+				const row = document.createElement('div')
+				row.className = 'tx-row'
+				row.innerHTML = `
+      <div class="tx-icon">${TX_ICONS[t.type] || '💰'}</div>
+      <div class="tx-info">
+        <div class="tx-desc">${t.description || t.type}</div>
+        <div class="tx-time">${new Date(t.createdAt).toLocaleString('hi-IN', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'})}</div>
+      </div>
+      <div class="tx-amount ${isPositive ? 'positive' : 'negative'}">
+        ${isPositive ? '+' : ''}${fmt(t.amount)}
+      </div>`
+				el.appendChild(row)
+			})
+		}
+
+		function renderWithdrawHistory(withdrawals) {
+			const el = document.getElementById('withdrawHistory')
+			if (!withdrawals?.length) return
+			el.innerHTML = ''
+			withdrawals.forEach(w => {
+				const row = document.createElement('div')
+				row.className = 'tx-row'
+				row.innerHTML = `
+      <div class="tx-icon">💸</div>
+      <div class="tx-info">
+        <div class="tx-desc">${fmt(w.amount)} → ${w.upiId}</div>
+        <div class="tx-time">${new Date(w.createdAt).toLocaleString('hi-IN')}</div>
+      </div>
+      <div class="w-status ${w.status}">${w.status}</div>`
+				el.appendChild(row)
+			})
+		}
+
+		async function enableMonetization() {
+			const upiId = document.getElementById('upiInput')?.value.trim()
+			if (!upiId) {showAlert('UPI ID daalo', 'error'); return }
+
+			const btn = document.querySelector('.enable-btn')
+			btn.disabled = true; btn.textContent = 'Enabling...'
+
+			const res = await fetch('/api/monetization/enable', {
+				method: 'POST', headers: csrf(),
+				body: JSON.stringify({upiId})
+			})
+			const data = await res.json()
+
+			if (data.success) {
+				showAlert(data.message, 'success')
+				setTimeout(loadDashboard, 1000)
+			} else {
+				showAlert(data.message, 'error')
+				btn.disabled = false; btn.textContent = 'Enable 🚀'
+			}
+		}
+
+		async function requestWithdrawal() {
+			const amount = document.getElementById('withdrawAmount').value
+			if (!amount || parseFloat(amount) < 100) {
+				showAlert('Minimum ₹100 withdraw kar sakte ho', 'error'); return
+			}
+
+			const btn = document.getElementById('withdrawBtn')
+			btn.disabled = true; btn.textContent = 'Processing...'
+
+			const res = await fetch('/api/monetization/withdraw', {
+				method: 'POST', headers: csrf(),
+				body: JSON.stringify({amount: parseFloat(amount)})
+			})
+			const data = await res.json()
+
+			showAlert(data.message, data.success ? 'success' : 'error')
+			btn.disabled = false; btn.textContent = '💸 Withdraw Karo'
+
+			if (data.success) {
+				document.getElementById('withdrawAmount').value = ''
+				setTimeout(loadDashboard, 500)
+			}
+		}
+
+		function showAlert(msg, type) {
+			const el = document.getElementById('mainAlert')
+			el.className = 'alert alert-' + type
+			el.textContent = msg
+			el.style.display = 'block'
+			setTimeout(() => el.style.display = 'none', 5000)
+		}
+
+		loadDashboard()
+
+		// ── Earnings Chart ──────────────────────────────────────────────────────
+		async function loadEarningsChart() {
+			const canvas = document.getElementById('earningsChart')
+			if (!canvas) return
+			try {
+				const res = await fetch('/api/monetization/earnings/chart?days=30')
+				const data = await res.json()
+				if (!data.labels || !data.labels.length) return
+
+				if (typeof Chart === 'undefined') return
+				new Chart(canvas, {
+					type: 'line',
+					data: {
+						labels: data.labels,
+						datasets: [{
+							label: 'Earnings (INR)',
+							data: data.values,
+							borderColor: '#6366f1',
+							backgroundColor: 'rgba(99,102,241,0.1)',
+							borderWidth: 2,
+							fill: true,
+							tension: 0.4,
+							pointBackgroundColor: '#6366f1',
+							pointRadius: 3,
+						}]
+					},
+					options: {
+						responsive: true,
+						plugins: {
+							legend: {display: false},
+							tooltip: {
+								callbacks: {
+									label: ctx => '₹' + parseFloat(ctx.raw).toFixed(2)
+								}
+							}
+						},
+						scales: {
+							x: {ticks: {color: '#4b5563', font: {size: 10}}, grid: {color: 'rgba(255,255,255,.05)'}},
+							y: {ticks: {color: '#4b5563', callback: v => '₹' + v}, grid: {color: 'rgba(255,255,255,.05)'}}
+						}
+					}
+				})
+			} catch (e) {console.warn('Chart load fail:', e)}
+		}
+
+		// ── Per-Post Earnings ────────────────────────────────────────────────────
+		async function loadPostEarnings() {
+			const wrap = document.getElementById('postEarningsList')
+			if (!wrap) return
+			try {
+				const res = await fetch('/api/monetization/earnings/posts')
+				const data = await res.json()
+				if (!data.length) {
+					wrap.innerHTML = '<div style="color:#4b5563;font-size:.82rem;text-align:center;padding:16px">Koi earnings nahi abhi</div>'
+					return
+				}
+				wrap.innerHTML = data.map(function (p) {
+					var vidHtml = p.videoUrl
+						? '<video src="' + esc(p.videoUrl) + '" style="width:100%;height:100%;object-fit:cover" preload="none"></video>'
+						: '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.2rem">🎬</div>'
+					return '<div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
+						'<div style="width:44px;height:60px;border-radius:8px;background:#1a1a2e;overflow:hidden;flex-shrink:0">' + vidHtml + '</div>' +
+						'<div style="flex:1;min-width:0">' +
+						'<div style="font-size:.82rem;font-weight:600;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.caption || 'Video') + '</div>' +
+						'<div style="font-size:.7rem;color:#4b5563;margin-top:2px">Post #' + p.postId + '</div>' +
+						'</div>' +
+						'<div style="font-size:.9rem;font-weight:800;color:#10b981;flex-shrink:0">&#8377;' + parseFloat(p.earnings).toFixed(2) + '</div>' +
+						'</div>'
+				}).join('')
+			} catch (e) {wrap.innerHTML = '<div style="color:#f87171;font-size:.82rem;padding:10px">Load fail</div>'}
+		}
+
+		// ── Leaderboard ──────────────────────────────────────────────────────────
+		async function loadLeaderboard() {
+			const wrap = document.getElementById('leaderboardList')
+			if (!wrap) return
+			try {
+				const res = await fetch('/api/monetization/leaderboard')
+				const data = await res.json()
+				if (!data.length) {
+					wrap.innerHTML = '<div style="color:#4b5563;font-size:.82rem;text-align:center;padding:16px">Koi data nahi</div>'
+					return
+				}
+				const medals = ['🥇', '🥈', '🥉']
+				wrap.innerHTML = data.map(function (c, i) {
+					var medal = ['🥇', '🥈', '🥉'][i] || ('#' + c.rank)
+					var avHtml = c.avatar
+						? '<img src="' + esc(c.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+						: '👤'
+					return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
+						'<div style="width:24px;text-align:center;flex-shrink:0">' + medal + '</div>' +
+						'<div style="width:36px;height:36px;border-radius:50%;background:#1a1a2e;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">' + avHtml + '</div>' +
+						'<div style="flex:1;min-width:0">' +
+						'<div style="font-size:.82rem;font-weight:700;color:#e5e7eb">' + esc(c.name) + '</div>' +
+						'<div style="font-size:.7rem;color:#4b5563">' + c.videoCount + ' videos &middot; ' + tierLabel(c.tier) + '</div>' +
+						'</div>' +
+						'<div style="font-size:.85rem;font-weight:800;color:#10b981;flex-shrink:0">&#8377;' + parseFloat(c.totalEarnings).toFixed(0) + '</div>' +
+						'</div>'
+				}).join('')
+			} catch (e) { }
+		}
+
+		function tierLabel(t) {
+			return {NONE: 'Starter', RISING: '🔥 Rising', PRO: '💎 Pro', ELITE: '👑 Elite'}[t] || t
+		}
+
+		function esc(s) {
+			return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+		}
+	</script>
+</body>
+
+</html>

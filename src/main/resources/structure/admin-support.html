@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Support Chat — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='support')}"></div>
+	<div class="main-content">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<div>
+				<h4 class="mb-0">💬 Support Chat Panel</h4>
+			</div>
+			<button class="btn btn-primary btn-sm" onclick="createTestTicket()">+ Test Ticket</button>
+		</div>
+		<div class="row g-0" style="height:600px;border:1px solid #e0e0ff;border-radius:12px;overflow:hidden">
+			<div class="col-md-4 border-end" style="overflow-y:auto">
+				<div class="p-3 border-bottom fw-semibold small">Tickets (<span id="ticketCount">0</span>)</div>
+				<div id="ticketList">
+					<div class="text-muted small text-center py-4">No tickets yet</div>
+				</div>
+			</div>
+			<div class="col-md-8 d-flex flex-column">
+				<div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+					<div id="activeTicketTitle" class="fw-semibold small text-muted">Select a ticket</div>
+					<button class="btn btn-sm btn-outline-secondary" id="closeTicketBtn" style="display:none"
+						onclick="closeTicket()">✓ Close Ticket</button>
+				</div>
+				<div id="messageArea" class="flex-grow-1 p-3" style="overflow-y:auto;background:#fafafa">
+					<div class="text-center text-muted py-4">Select a ticket</div>
+				</div>
+				<div class="p-3 border-top d-flex gap-2" id="replyArea" style="display:none">
+					<input type="text" id="replyInput" class="form-control form-control-sm" placeholder="Reply...">
+					<button class="btn btn-primary btn-sm" onclick="sendReply()">Send</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-support.js}"></script>
+	<button id="darkModeToggle" onclick="toggleDark()" title="Toggle Dark Mode">🌙</button>
+	<script>
+		function toggleDark() {document.body.classList.toggle('dark-mode'); const d = document.body.classList.contains('dark-mode'); localStorage.setItem('adminDarkMode', d); document.getElementById('darkModeToggle').textContent = d ? '☀️' : '🌙';}
+		if (localStorage.getItem('adminDarkMode') === 'true') {document.body.classList.add('dark-mode'); const b = document.getElementById('darkModeToggle'); if (b) b.textContent = '☀️';}
+	</script>
+</body>
+
+</html>

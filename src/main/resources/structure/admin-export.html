@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Export Reports — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+	<style>
+		.export-card {
+			border-radius: 14px;
+			border: 2px solid #f0f0ff;
+			transition: border-color 0.2s, box-shadow 0.2s;
+			cursor: pointer;
+		}
+
+		.export-card:hover {
+			border-color: #6c63ff;
+			box-shadow: 0 4px 20px rgba(108, 99, 255, 0.12);
+		}
+
+		.export-icon {
+			font-size: 2.5rem;
+			line-height: 1;
+		}
+
+		.format-badge {
+			font-size: 0.7rem;
+			padding: 3px 8px;
+			border-radius: 10px;
+			font-weight: 700;
+			letter-spacing: 0.5px;
+		}
+
+		.export-btn {
+			border-radius: 8px;
+			font-weight: 600;
+			min-width: 110px;
+		}
+
+		.preview-box {
+			background: #f8f9fa;
+			border-radius: 10px;
+			border: 1px solid #e0e0ff;
+			font-family: monospace;
+			font-size: 0.78rem;
+			max-height: 200px;
+			overflow-y: auto;
+			white-space: pre;
+			padding: 12px;
+		}
+
+		.progress-wrap {
+			display: none;
+		}
+
+		.spinner-border-sm {
+			width: 1rem;
+			height: 1rem;
+		}
+
+		#previewModal .modal-body {
+			padding: 0;
+		}
+	</style>
+</head>
+
+<body>
+
+	<!-- SIDEBAR -->
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='export')}"></div>
+	<div class="main-content">
+
+		<div class="d-flex align-items-center justify-content-between mb-4">
+			<div>
+				<h4 class="mb-0">📥 Export Reports</h4>
+				<small class="text-muted">CSV downloads aur PDF reports generate karo</small>
+			</div>
+			<!-- Period selector -->
+			<div class="d-flex align-items-center gap-2">
+				<label class="text-muted small mb-0">Period:</label>
+				<select id="exportDays" class="form-select form-select-sm" style="width:130px">
+					<option value="7">Last 7 days</option>
+					<option value="30" selected>Last 30 days</option>
+					<option value="90">Last 90 days</option>
+					<option value="365">Last 1 year</option>
+				</select>
+			</div>
+		</div>
+
+		<!-- EXPORT CARDS ROW 1 -->
+		<div class="row g-4 mb-4">
+
+			<!-- Users CSV -->
+			<div class="col-md-4">
+				<div class="card export-card p-4 h-100">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<div class="export-icon">👥</div>
+						<span class="format-badge bg-success text-white">CSV</span>
+					</div>
+					<h6 class="fw-bold mb-1">Users Report</h6>
+					<p class="text-muted small mb-3">ID, Name, Email, Role, Status, Total Posts</p>
+					<div class="mt-auto d-flex gap-2">
+						<button class="btn btn-outline-success btn-sm export-btn" onclick="downloadCSV('users')">
+							⬇ Download CSV
+						</button>
+						<button class="btn btn-outline-secondary btn-sm" onclick="previewCSV('users')"
+							title="Preview">👁</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Posts CSV -->
+			<div class="col-md-4">
+				<div class="card export-card p-4 h-100">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<div class="export-icon">🎬</div>
+						<span class="format-badge bg-success text-white">CSV</span>
+					</div>
+					<h6 class="fw-bold mb-1">Videos Report</h6>
+					<p class="text-muted small mb-3">ID, User, Content, Tags, Likes, Comments, Shares, Status</p>
+					<div class="mt-auto d-flex gap-2">
+						<button class="btn btn-outline-success btn-sm export-btn" onclick="downloadCSV('posts')">
+							⬇ Download CSV
+						</button>
+						<button class="btn btn-outline-secondary btn-sm" onclick="previewCSV('posts')"
+							title="Preview">👁</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Engagements CSV -->
+			<div class="col-md-4">
+				<div class="card export-card p-4 h-100">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<div class="export-icon">📊</div>
+						<span class="format-badge bg-success text-white">CSV</span>
+					</div>
+					<h6 class="fw-bold mb-1">Engagement Report</h6>
+					<p class="text-muted small mb-3">Daily counts + Type breakdown (LIKE, COMMENT, SHARE)</p>
+					<div class="mt-auto d-flex gap-2">
+						<button class="btn btn-outline-success btn-sm export-btn" onclick="downloadCSV('engagements')">
+							⬇ Download CSV
+						</button>
+						<button class="btn btn-outline-secondary btn-sm" onclick="previewCSV('engagements')"
+							title="Preview">👁</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- EXPORT CARDS ROW 2 — PDF -->
+		<div class="row g-4 mb-4">
+
+			<!-- Full Summary PDF -->
+			<div class="col-md-4">
+				<div class="card export-card p-4 h-100" style="border-color:#ffe0e0">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<div class="export-icon">📋</div>
+						<span class="format-badge bg-danger text-white">PDF</span>
+					</div>
+					<h6 class="fw-bold mb-1">Full Summary PDF</h6>
+					<p class="text-muted small mb-3">Platform overview, stats, top posts, engagement breakdown</p>
+					<div class="mt-auto">
+						<button class="btn btn-outline-danger btn-sm export-btn w-100" onclick="generateSummaryPDF()"
+							id="btnSummaryPDF">
+							⬇ Generate PDF
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Users PDF -->
+			<div class="col-md-4">
+				<div class="card export-card p-4 h-100" style="border-color:#ffe0e0">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<div class="export-icon">👤</div>
+						<span class="format-badge bg-danger text-white">PDF</span>
+					</div>
+					<h6 class="fw-bold mb-1">Users Table PDF</h6>
+					<p class="text-muted small mb-3">Saare users ki formatted table with status</p>
+					<div class="mt-auto">
+						<button class="btn btn-outline-danger btn-sm export-btn w-100" onclick="generateUsersPDF()"
+							id="btnUsersPDF">
+							⬇ Generate PDF
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Analytics PDF -->
+			<div class="col-md-4">
+				<div class="card export-card p-4 h-100" style="border-color:#ffe0e0">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<div class="export-icon">📈</div>
+						<span class="format-badge bg-danger text-white">PDF</span>
+					</div>
+					<h6 class="fw-bold mb-1">Analytics PDF</h6>
+					<p class="text-muted small mb-3">Engagement stats, type breakdown, top 10 posts</p>
+					<div class="mt-auto">
+						<button class="btn btn-outline-danger btn-sm export-btn w-100" onclick="generateAnalyticsPDF()"
+							id="btnAnalyticsPDF">
+							⬇ Generate PDF
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- RECENT EXPORTS LOG -->
+		<div class="card p-4 shadow-sm">
+			<h6 class="mb-3">📝 Export Log (this session)</h6>
+			<div id="exportLog" class="text-muted small">
+				Koi export nahi kiya abhi.
+			</div>
+		</div>
+	</div>
+
+	<!-- PREVIEW MODAL -->
+	<div class="modal fade" id="previewModal" tabindex="-1">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h6 class="modal-title mb-0" id="previewTitle">Preview</h6>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body p-3">
+					<div class="preview-box" id="previewContent">Loading...</div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-success btn-sm" id="previewDownloadBtn">⬇ Download</button>
+					<button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-export.js}"></script>
+</body>
+
+</html>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="ai-feed-engine"/>
+
+	<appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="com.yogesh.config.logging.JsonLogLayout"/>
+	</appender>
+
+	<root level="INFO">
+		<appender-ref ref="CONSOLE_JSON"/>
+	</root>
+
+	<logger name="com.yogesh" level="${LOG_LEVEL_APP:-INFO}"/>
+	<logger name="org.springframework.web" level="${LOG_LEVEL_SPRING_WEB:-WARN}"/>
+	<logger name="org.springframework.security" level="${LOG_LEVEL_SECURITY:-WARN}"/>
+	<logger name="org.hibernate.SQL" level="${LOG_LEVEL_SQL:-WARN}"/>
+	<logger name="org.springframework.mail" level="${LOG_LEVEL_MAIL:-INFO}"/>
+</configuration>

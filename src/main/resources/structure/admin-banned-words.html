@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Banned Words Filter — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='banned-words')}"></div>
+	<div class="main-content">
+
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<div>
+				<h4 class="mb-0">🚫 Banned Words Filter</h4><small class="text-muted">Posts scan karein aur offensive
+					words block karein</small>
+			</div>
+			<button class="btn btn-warning btn-sm" onclick="scanContent()">🔍 Scan All Posts</button>
+		</div>
+		<div class="row g-4">
+			<div class="col-md-5">
+				<div class="card shadow-sm p-4">
+					<h6 class="mb-3">Add Banned Word</h6>
+					<div class="input-group mb-3">
+						<input type="text" id="newWord" class="form-control" placeholder="Word ya phrase...">
+						<button class="btn btn-danger" onclick="addWord()">Add</button>
+					</div>
+					<h6 class="mb-2">Banned Words (<span id="wordCount">0</span>)</h6>
+					<div id="wordList" style="max-height:400px;overflow-y:auto"></div>
+				</div>
+			</div>
+			<div class="col-md-7">
+				<div class="card shadow-sm p-4">
+					<h6 class="mb-3">Scan Results</h6>
+					<div id="scanResults">
+						<div class="text-muted small text-center py-4">Scan karein violations dhundne ke liye</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-banned-words.js}"></script>
+
+	<!-- Dark Mode Toggle -->
+	<button id="darkModeToggle" onclick="toggleDark()" title="Toggle Dark Mode">🌙</button>
+	<script>
+		function toggleDark() {
+			document.body.classList.toggle('dark-mode');
+			const isDark = document.body.classList.contains('dark-mode');
+			localStorage.setItem('adminDarkMode', isDark);
+			document.getElementById('darkModeToggle').textContent = isDark ? '☀️' : '🌙';
+		}
+		// Apply saved preference
+		if (localStorage.getItem('adminDarkMode') === 'true') {
+			document.body.classList.add('dark-mode');
+			const btn = document.getElementById('darkModeToggle');
+			if (btn) btn.textContent = '☀️';
+		}
+	</script>
+</body>
+
+</html>

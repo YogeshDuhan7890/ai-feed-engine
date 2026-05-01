@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<title>Account Settings | AI Feed</title>
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body {
+			background: #0a0a14;
+			color: #eee;
+			font-family: 'Segoe UI', sans-serif;
+			min-height: 100vh;
+		}
+		.settings-wrap {
+			max-width: 860px;
+			margin: 0 auto;
+			padding: 92px 20px 80px;
+		}
+		h1 {
+			font-size: 1.5rem;
+			font-weight: 800;
+			margin-bottom: 6px;
+		}
+		.sub {
+			color: #6b7280;
+			font-size: .88rem;
+			margin-bottom: 28px;
+		}
+		.tabs {
+			display: flex;
+			gap: 6px;
+			margin-bottom: 24px;
+			overflow-x: auto;
+			padding-bottom: 4px;
+		}
+		.tab-btn {
+			background: #111827;
+			border: 1px solid #1f2937;
+			color: #94a3b8;
+			padding: 10px 16px;
+			border-radius: 999px;
+			cursor: pointer;
+			font-size: .86rem;
+			font-weight: 600;
+			white-space: nowrap;
+		}
+		.tab-btn.active {
+			background: linear-gradient(135deg, #4f46e5, #7c3aed);
+			border-color: transparent;
+			color: #fff;
+		}
+		.tab-pane { display: none; }
+		.tab-pane.active { display: block; }
+		.card {
+			background: #111;
+			border: 1px solid #1f2937;
+			border-radius: 16px;
+			padding: 22px;
+			margin-bottom: 18px;
+		}
+		.card h2 {
+			font-size: 1rem;
+			font-weight: 700;
+			margin-bottom: 6px;
+		}
+		.card p {
+			color: #6b7280;
+			font-size: .84rem;
+			margin-bottom: 16px;
+			line-height: 1.6;
+		}
+		.form-group {
+			margin-bottom: 14px;
+		}
+		.form-group label {
+			display: block;
+			color: #94a3b8;
+			font-size: .75rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .4px;
+			margin-bottom: 6px;
+		}
+		.form-group input,
+		.form-group textarea {
+			width: 100%;
+			padding: 11px 13px;
+			background: #0f172a;
+			border: 1px solid #1f2937;
+			border-radius: 10px;
+			color: #f8fafc;
+			font-size: .9rem;
+			outline: none;
+			font-family: inherit;
+		}
+		.form-group textarea {
+			resize: vertical;
+			min-height: 96px;
+		}
+		.form-group input:focus,
+		.form-group textarea:focus {
+			border-color: #4f46e5;
+		}
+		.input-prefix {
+			display: flex;
+			align-items: center;
+			background: #0f172a;
+			border: 1px solid #1f2937;
+			border-radius: 10px;
+			overflow: hidden;
+		}
+		.input-prefix span {
+			padding: 11px 12px;
+			color: #64748b;
+			border-right: 1px solid #1f2937;
+		}
+		.input-prefix input {
+			border: none;
+			background: transparent;
+			flex: 1;
+		}
+		.avatar-wrap {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+			flex-wrap: wrap;
+		}
+		.avatar-img {
+			width: 76px;
+			height: 76px;
+			border-radius: 50%;
+			object-fit: cover;
+			background: #1e293b;
+			border: 2px solid #374151;
+		}
+		.btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			padding: 10px 18px;
+			border-radius: 10px;
+			border: none;
+			cursor: pointer;
+			font-size: .88rem;
+			font-weight: 700;
+		}
+		.btn-primary {
+			background: linear-gradient(135deg, #4f46e5, #7c3aed);
+			color: #fff;
+		}
+		.btn-outline {
+			background: transparent;
+			border: 1px solid #374151;
+			color: #cbd5e1;
+		}
+		.btn-danger {
+			background: rgba(239, 68, 68, .12);
+			border: 1px solid #ef4444;
+			color: #fca5a5;
+		}
+		.btn:disabled {
+			opacity: .5;
+			cursor: not-allowed;
+		}
+		.row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 16px;
+		}
+		.otp-row {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			gap: 10px;
+			align-items: end;
+		}
+		.toggle-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 14px;
+			padding: 14px 0;
+			border-bottom: 1px solid #1f2937;
+		}
+		.toggle-row:last-child {
+			border-bottom: none;
+		}
+		.toggle-label {
+			font-size: .9rem;
+			font-weight: 700;
+		}
+		.toggle-sub {
+			font-size: .8rem;
+			color: #6b7280;
+			margin-top: 4px;
+		}
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 48px;
+			height: 26px;
+			flex-shrink: 0;
+		}
+		.switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+		.slider {
+			position: absolute;
+			inset: 0;
+			border-radius: 999px;
+			background: #374151;
+			cursor: pointer;
+			transition: .25s;
+		}
+		.slider:before {
+			content: '';
+			position: absolute;
+			width: 20px;
+			height: 20px;
+			left: 3px;
+			top: 3px;
+			border-radius: 50%;
+			background: #fff;
+			transition: .25s;
+		}
+		input:checked + .slider {
+			background: #4f46e5;
+		}
+		input:checked + .slider:before {
+			transform: translateX(22px);
+		}
+		.alert {
+			display: none;
+			padding: 11px 14px;
+			border-radius: 10px;
+			font-size: .84rem;
+			margin-bottom: 14px;
+		}
+		.alert-success {
+			display: block;
+			background: rgba(34, 197, 94, .12);
+			border: 1px solid #22c55e;
+			color: #86efac;
+		}
+		.alert-error {
+			display: block;
+			background: rgba(239, 68, 68, .12);
+			border: 1px solid #ef4444;
+			color: #fca5a5;
+		}
+		.info-chip {
+			display: inline-block;
+			padding: 8px 12px;
+			border-radius: 999px;
+			background: rgba(79, 70, 229, .12);
+			border: 1px solid rgba(79, 70, 229, .3);
+			color: #c7d2fe;
+			font-size: .82rem;
+			margin-bottom: 14px;
+		}
+		.table-wrap {
+			overflow-x: auto;
+		}
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		th, td {
+			text-align: left;
+			padding: 12px 10px;
+			border-bottom: 1px solid #1f2937;
+			font-size: .84rem;
+		}
+		th {
+			color: #94a3b8;
+			font-size: .76rem;
+			text-transform: uppercase;
+			letter-spacing: .4px;
+		}
+		.inline-actions {
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+		.block-list {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+		.block-item {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			padding: 14px;
+			background: #0f172a;
+			border: 1px solid #1f2937;
+			border-radius: 14px;
+		}
+		.block-avatar {
+			width: 46px;
+			height: 46px;
+			border-radius: 50%;
+			object-fit: cover;
+			background: #1e293b;
+			flex-shrink: 0;
+		}
+		.block-info {
+			flex: 1;
+		}
+		.block-name {
+			font-size: .9rem;
+			font-weight: 700;
+			color: #f8fafc;
+		}
+		.block-date {
+			font-size: .78rem;
+			color: #6b7280;
+			margin-top: 3px;
+		}
+		.empty-state {
+			padding: 18px 0;
+			color: #6b7280;
+			font-size: .84rem;
+		}
+		.danger-zone {
+			border-color: rgba(239, 68, 68, .35);
+		}
+		@media (max-width: 720px) {
+			.row {
+				grid-template-columns: 1fr;
+			}
+			.otp-row {
+				grid-template-columns: 1fr;
+			}
+			.toggle-row {
+				align-items: flex-start;
+			}
+		}
+
+		[data-theme="light"] body {
+			background: var(--bg);
+			color: var(--text);
+		}
+
+		[data-theme="light"] h1,
+		[data-theme="light"] .card h2,
+		[data-theme="light"] .toggle-label,
+		[data-theme="light"] .block-name {
+			color: var(--text);
+		}
+
+		[data-theme="light"] .sub,
+		[data-theme="light"] .card p,
+		[data-theme="light"] .toggle-sub,
+		[data-theme="light"] .empty-state,
+		[data-theme="light"] th {
+			color: var(--text-muted);
+		}
+
+		[data-theme="light"] .tab-btn {
+			background: var(--bg-card);
+			border-color: var(--border);
+			color: var(--text-muted);
+		}
+
+		[data-theme="light"] .card,
+		[data-theme="light"] .input-prefix,
+		[data-theme="light"] .block-item {
+			background: var(--bg-card);
+			border-color: var(--border);
+			box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+		}
+
+		[data-theme="light"] .form-group input,
+		[data-theme="light"] .form-group textarea,
+		[data-theme="light"] .input-prefix input {
+			background: var(--input-bg);
+			border-color: var(--border);
+			color: var(--text);
+		}
+
+		[data-theme="light"] .input-prefix span,
+		[data-theme="light"] .form-group label,
+		[data-theme="light"] td,
+		[data-theme="light"] .block-date {
+			color: var(--text);
+		}
+
+		[data-theme="light"] table,
+		[data-theme="light"] th,
+		[data-theme="light"] td,
+		[data-theme="light"] .toggle-row {
+			border-color: var(--border);
+		}
+	</style>
+</head>
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="settings-wrap">
+		<h1>Account Settings</h1>
+		<p class="sub" th:text="'@' + (${user.username} ?: user.email)"></p>
+
+		<div class="tabs">
+			<button class="tab-btn active" onclick="switchTab('profile', this)">Profile</button>
+			<button class="tab-btn" onclick="switchTab('security', this)">Security</button>
+			<button class="tab-btn" onclick="switchTab('email', this)">Email</button>
+			<button class="tab-btn" onclick="switchTab('privacy', this)">Privacy & 2FA</button>
+			<button class="tab-btn" onclick="switchTab('danger', this)">Delete</button>
+		</div>
+
+		<div id="tab-profile" class="tab-pane active">
+			<div class="card">
+				<h2>Profile Picture</h2>
+                    <p>Square image best lagti hai. 10MB tak ki JPG/PNG image upload kar sakte ho.</p>
+				<div id="profileAlert" class="alert"></div>
+				<div class="avatar-wrap">
+					<img id="avatarPreview" th:src="${user.avatar} ?: '/images/default.png'" class="avatar-img"
+						alt="avatar" onerror="this.src='/images/default.png'">
+					<div class="inline-actions">
+						<label class="btn btn-outline" for="avatarFile">Photo Change Karo</label>
+                    <input type="file" id="avatarFile" accept="image/jpeg,image/png,.jpg,.png" style="display:none"
+							onchange="uploadAvatar(this)">
+					</div>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>Basic Info</h2>
+				<p>Yeh info public profile par dikh sakti hai.</p>
+				<div class="row">
+					<div class="form-group">
+						<label>Full Name</label>
+						<input type="text" id="profileName" th:value="${user.name}" placeholder="Apna naam">
+					</div>
+					<div class="form-group">
+						<label>Username</label>
+						<div class="input-prefix">
+							<span>@</span>
+							<input type="text" id="profileUsername" th:value="${user.username}" placeholder="username">
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label>Bio</label>
+					<textarea id="profileBio" th:text="${user.bio}" placeholder="Apne baare mein kuch likho"></textarea>
+				</div>
+				<div class="form-group">
+					<label>Interests</label>
+					<input type="text" id="profileInterests" th:value="${interestsText}"
+						placeholder="tech,gaming,music">
+				</div>
+				<button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+			</div>
+		</div>
+
+		<div id="tab-security" class="tab-pane">
+			<div class="card">
+				<h2>Password Change</h2>
+				<p>Strong password use karo. Minimum 8 characters, 1 uppercase, 1 lowercase, 1 number aur 1 special character hona chahiye.</p>
+				<div id="passwordAlert" class="alert"></div>
+				<div class="form-group">
+					<label>Current Password</label>
+					<input type="password" id="currentPassword" placeholder="Purana password">
+				</div>
+				<div class="form-group">
+					<label>New Password</label>
+					<input type="password" id="newPassword" placeholder="Naya password">
+				</div>
+				<div class="form-group">
+					<label>Confirm New Password</label>
+					<input type="password" id="confirmPassword" placeholder="Naya password dobara">
+				</div>
+				<button class="btn btn-primary" onclick="changePassword()">Password Change Karo</button>
+			</div>
+
+			<div class="card">
+				<h2>Active Sessions</h2>
+				<p>Yahan se dekh sakte ho ki account kin devices par logged in hai.</p>
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th>Device</th>
+								<th>Location</th>
+								<th>IP</th>
+								<th>Login Time</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody id="sessionTable">
+							<tr><td colspan="5" class="empty-state">Loading sessions...</td></tr>
+						</tbody>
+					</table>
+				</div>
+				<div style="margin-top:14px">
+					<button class="btn btn-outline" onclick="logoutOthers()">Logout all other devices</button>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>Security Alerts</h2>
+				<p>Suspicious login ya unusual activity alerts yahan dikhte hain.</p>
+				<div id="alertsBox" class="block-list">
+					<div class="empty-state">Loading alerts...</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="tab-email" class="tab-pane">
+			<div class="card">
+				<h2>Current Email</h2>
+				<p>Yeh aapka current registered email hai.</p>
+				<div class="info-chip" th:text="${user.email}"></div>
+				<div class="info-chip" th:text="${user.emailVerified} ? 'Email verified' : 'Email not verified'"></div>
+				<div th:if="${user.pendingEmail != null}" class="info-chip"
+					th:text="'Pending email change: ' + ${user.pendingEmail}"></div>
+			</div>
+
+			<div class="card">
+				<h2>Change Email</h2>
+				<p>Naye email par verification link bheja jayega.</p>
+				<div id="emailChangeAlert" class="alert"></div>
+				<div class="form-group">
+					<label>New Email</label>
+					<input type="email" id="newEmailInput" placeholder="naya@email.com">
+				</div>
+				<button class="btn btn-primary" onclick="requestEmailChange()">Verification Link Bhejo</button>
+			</div>
+
+			<div class="card">
+				<h2>Verify Email with OTP</h2>
+				<p>OTP email par bhejo aur yahan enter karke verify karo.</p>
+				<div id="otpAlert" class="alert"></div>
+				<div class="otp-row" style="margin-bottom:12px;">
+					<div class="form-group" style="margin-bottom:0;">
+						<label>Email</label>
+						<input type="email" id="otpEmail" th:value="${user.email}" placeholder="email@example.com">
+					</div>
+					<button class="btn btn-outline" onclick="sendOtp('VERIFY_EMAIL')">OTP Bhejo</button>
+				</div>
+				<div class="form-group">
+					<label>OTP</label>
+					<input type="text" id="otpInput" placeholder="123456" maxlength="6"
+						style="letter-spacing:8px;font-size:1.1rem;text-align:center;">
+				</div>
+				<button class="btn btn-primary" onclick="verifyOtp('VERIFY_EMAIL')">Verify Karo</button>
+			</div>
+		</div>
+
+		<div id="tab-privacy" class="tab-pane">
+			<div class="card">
+				<h2>Two-Factor Authentication</h2>
+				<p>2FA on hone par login ke baad email OTP verify karna padega.</p>
+				<div id="twoFaAlert" class="alert"></div>
+				<div class="toggle-row">
+					<div>
+						<div class="toggle-label">Email OTP 2FA</div>
+						<div class="toggle-sub">Har login par 6 digit OTP email pe aayega.</div>
+					</div>
+					<label class="switch">
+						<input type="checkbox" id="twoFaToggle" th:checked="${user.twoFaEnabled}"
+							onchange="toggle2FA(this.checked)">
+						<span class="slider"></span>
+					</label>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>Account Visibility</h2>
+				<p>Private account on hone par naye followers pehle request bhejenge. Aap accept ya reject kar sakte ho.</p>
+				<div id="privacyAlert" class="alert"></div>
+				<div class="toggle-row">
+					<div>
+						<div class="toggle-label">Private Account</div>
+						<div class="toggle-sub">Non-followers ko videos locked dikhenge aur follow requests pending rahengi.</div>
+					</div>
+					<label class="switch">
+						<input type="checkbox" id="privateAccountToggle" th:checked="${user.privateAccount}"
+							onchange="togglePrivateAccount(this.checked)">
+						<span class="slider"></span>
+					</label>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>Follow Requests</h2>
+				<p>Private account par aane wali pending requests yahan manage karo.</p>
+				<div id="followRequestsContainer" class="block-list">
+					<div class="empty-state">Loading follow requests...</div>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2>Block List</h2>
+				<p>Blocked users ko yahan dekh sakte ho aur unblock bhi kar sakte ho.</p>
+				<div id="blockListContainer" class="block-list">
+					<div class="empty-state">Loading block list...</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="tab-danger" class="tab-pane">
+			<div class="card danger-zone">
+				<h2 style="color:#ef4444;">Delete Account</h2>
+				<p>Yeh action permanent hai. Account, videos aur related data delete ho jayega.</p>
+				<div id="deleteAlert" class="alert"></div>
+				<div class="form-group">
+					<label>Confirm Password</label>
+					<input type="password" id="deletePassword" placeholder="Apna password daalo">
+				</div>
+				<button class="btn btn-danger" onclick="confirmDelete()">Account Permanently Delete Karo</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		function switchTab(name, btn) {
+			document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'))
+			document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+			document.getElementById('tab-' + name).classList.add('active')
+			btn.classList.add('active')
+
+			if (name === 'security') {
+				loadSessions()
+				loadAlerts()
+			}
+			if (name === 'privacy') {
+				loadFollowRequests()
+				loadBlockList()
+			}
+		}
+
+		function showAlert(id, msg, type) {
+			const el = document.getElementById(id)
+			el.className = 'alert alert-' + type
+			el.textContent = msg
+			el.style.display = 'block'
+			setTimeout(() => { el.style.display = 'none' }, 4500)
+		}
+
+		function csrfHeaders() {
+			const token = document.querySelector('meta[name="_csrf"]')?.content
+			const header = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN'
+			return token ? { [header]: token } : {}
+		}
+
+		async function postJson(url, data) {
+			try {
+				const res = await fetch(url, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+					body: JSON.stringify(data)
+				})
+				return await res.json()
+			} catch (e) {
+				return { success: false, message: 'Network error. Dobara try karo.' }
+			}
+		}
+
+		async function uploadAvatar(input) {
+			if (!input.files[0]) return
+			const formData = new FormData()
+			formData.append('file', input.files[0])
+
+			try {
+				const res = await fetch('/api/profile/avatar', {
+					method: 'POST',
+					headers: csrfHeaders(),
+					body: formData
+				})
+				const url = await res.text()
+				document.getElementById('avatarPreview').src = url + '?t=' + Date.now()
+				showAlert('profileAlert', 'Profile picture update ho gaya', 'success')
+			} catch (e) {
+				showAlert('profileAlert', 'Upload fail ho gaya', 'error')
+			}
+		}
+
+		async function saveProfile() {
+			const res = await postJson('/api/account/update-profile', {
+				name: document.getElementById('profileName').value,
+				username: document.getElementById('profileUsername').value,
+				bio: document.getElementById('profileBio').value,
+				interests: document.getElementById('profileInterests').value
+			})
+			showAlert('profileAlert', res.message, res.success ? 'success' : 'error')
+		}
+
+		async function changePassword() {
+			const newPassword = document.getElementById('newPassword').value
+			const confirmPassword = document.getElementById('confirmPassword').value
+			if (newPassword !== confirmPassword) {
+				showAlert('passwordAlert', 'Naye passwords match nahi kar rahe', 'error')
+				return
+			}
+
+			const res = await postJson('/api/account/change-password', {
+				currentPassword: document.getElementById('currentPassword').value,
+				newPassword
+			})
+			showAlert('passwordAlert', res.message, res.success ? 'success' : 'error')
+			if (res.success) {
+				document.getElementById('currentPassword').value = ''
+				document.getElementById('newPassword').value = ''
+				document.getElementById('confirmPassword').value = ''
+			}
+		}
+
+		async function requestEmailChange() {
+			const email = document.getElementById('newEmailInput').value
+			if (!email) {
+				showAlert('emailChangeAlert', 'Email daalo', 'error')
+				return
+			}
+			const res = await postJson('/api/account/request-email-change', { newEmail: email })
+			showAlert('emailChangeAlert', res.message, res.success ? 'success' : 'error')
+		}
+
+		async function sendOtp(purpose) {
+			const email = document.getElementById('otpEmail').value
+			if (!email) {
+				showAlert('otpAlert', 'Email daalo', 'error')
+				return
+			}
+			const res = await postJson('/api/account/send-otp', { email, purpose })
+			showAlert('otpAlert', res.message, res.success ? 'success' : 'error')
+		}
+
+		async function verifyOtp(purpose) {
+			const email = document.getElementById('otpEmail').value
+			const otp = document.getElementById('otpInput').value
+			if (!otp || otp.length !== 6) {
+				showAlert('otpAlert', '6 digit OTP daalo', 'error')
+				return
+			}
+			const res = await postJson('/api/account/verify-otp', { email, purpose, otp })
+			showAlert('otpAlert', res.message, res.success ? 'success' : 'error')
+		}
+
+		async function toggle2FA(enable) {
+			const res = await postJson('/api/account/2fa/toggle', { enable })
+			showAlert('twoFaAlert', res.message, res.success !== false ? 'success' : 'error')
+			if (res.success === false) {
+				document.getElementById('twoFaToggle').checked = !enable
+			}
+		}
+
+		async function togglePrivateAccount(enable) {
+			const res = await postJson('/api/account/privacy', { privateAccount: enable })
+			showAlert('privacyAlert', res.message, res.success !== false ? 'success' : 'error')
+			if (res.success === false) {
+				document.getElementById('privateAccountToggle').checked = !enable
+			}
+		}
+
+		async function confirmDelete() {
+			const password = document.getElementById('deletePassword').value
+			if (!password) {
+				showAlert('deleteAlert', 'Password daalo', 'error')
+				return
+			}
+			if (!confirm('Pakka? Account permanently delete ho jayega.')) return
+
+			const res = await postJson('/api/account/delete', { password })
+			if (res.success) {
+				window.location.href = res.redirect || '/login'
+				return
+			}
+			showAlert('deleteAlert', res.message, 'error')
+		}
+
+		async function loadSessions() {
+			try {
+				const res = await fetch('/api/user/sessions')
+				const data = await res.json()
+				const tbody = document.getElementById('sessionTable')
+
+				if (!Array.isArray(data) || !data.length) {
+					tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No active sessions found.</td></tr>'
+					return
+				}
+
+				tbody.innerHTML = data.map(s => {
+					const isCurrent = s.current === true
+					return `
+						<tr ${isCurrent ? 'style="background:#111827"' : ''}>
+							<td>${s.device?.browser || '-'} / ${s.device?.os || '-'}</td>
+							<td>${s.location?.city || '-'}, ${s.location?.country || '-'}</td>
+							<td>${s.ip || '-'}</td>
+							<td>${formatTime(s.loginTime)}</td>
+							<td>
+								${isCurrent ? 'Current device' : `<button class="btn btn-outline" style="padding:6px 12px;font-size:.75rem;" onclick="logoutSession('${s.sessionId}')">Logout</button>`}
+							</td>
+						</tr>
+					`
+				}).join('')
+			} catch (e) {
+				document.getElementById('sessionTable').innerHTML =
+					'<tr><td colspan="5" class="empty-state">Sessions load nahi hui.</td></tr>'
+			}
+		}
+
+		async function logoutSession(id) {
+			await fetch('/api/user/sessions/' + id, { method: 'DELETE', headers: csrfHeaders() })
+			loadSessions()
+		}
+
+		async function logoutOthers() {
+			await fetch('/api/user/sessions/others', { method: 'DELETE', headers: csrfHeaders() })
+			loadSessions()
+		}
+
+		async function loadAlerts() {
+			try {
+				const res = await fetch('/api/user/alerts')
+				const data = await res.json()
+				const box = document.getElementById('alertsBox')
+
+				if (!Array.isArray(data) || !data.length) {
+					box.innerHTML = '<div class="empty-state">Abhi koi security alert nahi hai.</div>'
+					return
+				}
+
+				box.innerHTML = data.map(a => `
+					<div class="block-item">
+						<div class="block-info">
+							<div class="block-name">${a.reason || 'Security alert'}</div>
+							<div class="block-date">${a.location?.city || '-'}, ${a.location?.country || '-'} | ${formatTime(a.time)}</div>
+						</div>
+					</div>
+				`).join('')
+			} catch (e) {
+				document.getElementById('alertsBox').innerHTML =
+					'<div class="empty-state">Alerts load nahi hui.</div>'
+			}
+		}
+
+		async function loadBlockList() {
+			try {
+				const res = await fetch('/api/block/list')
+				const data = await res.json()
+				const container = document.getElementById('blockListContainer')
+
+				if (!Array.isArray(data) || !data.length) {
+					container.innerHTML = '<div class="empty-state">Koi blocked user nahi hai.</div>'
+					return
+				}
+
+				container.innerHTML = data.map(u => `
+					<div class="block-item">
+						<img class="block-avatar" src="${u.avatar || '/images/default.png'}" alt="${u.name || 'User'}" onerror="this.src='/images/default.png'">
+						<div class="block-info">
+							<div class="block-name">${u.name || 'User'}</div>
+							<div class="block-date">Blocked: ${u.blockedAt ? formatDate(u.blockedAt) : '-'}</div>
+						</div>
+						<button class="btn btn-outline" style="padding:8px 14px;" onclick="unblockUser(${u.userId})">Unblock</button>
+					</div>
+				`).join('')
+			} catch (e) {
+				document.getElementById('blockListContainer').innerHTML =
+					'<div class="empty-state">Block list load nahi hui.</div>'
+			}
+		}
+
+		async function loadFollowRequests() {
+			try {
+				const res = await fetch('/api/follow-requests/pending')
+				const data = await res.json()
+				const container = document.getElementById('followRequestsContainer')
+				const requests = Array.isArray(data.requests) ? data.requests : []
+
+				if (!requests.length) {
+					container.innerHTML = '<div class="empty-state">Abhi koi pending follow request nahi hai.</div>'
+					return
+				}
+
+				container.innerHTML = requests.map(user => `
+					<div class="block-item">
+						<img class="block-avatar" src="${user.avatar || '/images/default.png'}" alt="${user.name || 'User'}" onerror="this.src='/images/default.png'">
+						<div class="block-info">
+							<div class="block-name">${user.name || 'User'}</div>
+							<div class="block-date">@${user.username || 'user'}${user.bio ? ' • ' + user.bio : ''}</div>
+						</div>
+						<div class="inline-actions">
+							<button class="btn btn-primary" style="padding:8px 14px;" onclick="handleFollowRequest(${user.id}, 'accept')">Accept</button>
+							<button class="btn btn-outline" style="padding:8px 14px;" onclick="handleFollowRequest(${user.id}, 'reject')">Reject</button>
+						</div>
+					</div>
+				`).join('')
+			} catch (e) {
+				document.getElementById('followRequestsContainer').innerHTML =
+					'<div class="empty-state">Follow requests load nahi hui.</div>'
+			}
+		}
+
+		async function handleFollowRequest(userId, action) {
+			const res = await fetch(`/api/follow-requests/${userId}/${action}`, {
+				method: 'POST',
+				headers: csrfHeaders()
+			})
+			const data = await res.json()
+			showAlert('privacyAlert', data.message || 'Request update ho gayi', res.ok ? 'success' : 'error')
+			loadFollowRequests()
+		}
+
+		async function unblockUser(userId) {
+			const res = await fetch('/api/block/unblock/' + userId, {
+				method: 'POST',
+				headers: csrfHeaders()
+			})
+			const data = await res.json()
+			showAlert('privacyAlert', data.message || 'User unblock ho gaya', res.ok ? 'success' : 'error')
+			loadBlockList()
+		}
+
+		function formatTime(value) {
+			if (!value) return '-'
+			return new Date(value).toLocaleString('en-IN')
+		}
+
+		function formatDate(value) {
+			if (!value) return '-'
+			return new Date(value).toLocaleDateString('en-IN')
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			loadSessions()
+			loadAlerts()
+			loadFollowRequests()
+			loadBlockList()
+		})
+	</script>
+</body>
+</html>

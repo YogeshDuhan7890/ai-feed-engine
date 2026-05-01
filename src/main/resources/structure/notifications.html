@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Notifications | AI Feed</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		html,
+		body {
+			background: #07070f;
+			color: #f1f1f8;
+			font-family: 'Segoe UI', sans-serif;
+			margin: 0;
+		}
+
+		.notif-page {
+			max-width: 680px;
+			margin: 0 auto;
+			padding: 80px 20px 100px;
+		}
+
+		/* ── Header ── */
+		.notif-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 20px;
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+
+		.notif-header-left h1 {
+			font-size: 1.4rem;
+			font-weight: 800;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin-bottom: 3px;
+		}
+
+		.notif-header-left p {
+			font-size: .8rem;
+			color: #6b7280;
+		}
+
+		.notif-unread-pill {
+			background: rgba(99, 102, 241, .15);
+			border: 1px solid rgba(99, 102, 241, .25);
+			color: #818cf8;
+			padding: 2px 10px;
+			border-radius: 20px;
+			font-size: .72rem;
+			font-weight: 700;
+			display: inline-block;
+			margin-left: 6px;
+		}
+
+		.mark-all-btn {
+			background: rgba(255, 255, 255, .06);
+			border: 1px solid rgba(255, 255, 255, .1);
+			color: #9ca3af;
+			padding: 8px 16px;
+			border-radius: 20px;
+			font-size: .78rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all .2s;
+			font-family: inherit;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.mark-all-btn:hover {
+			background: rgba(255, 255, 255, .1);
+			color: #f1f1f8;
+		}
+
+		/* ── Filter Tabs ── */
+		.notif-filters {
+			display: flex;
+			gap: 6px;
+			margin-bottom: 16px;
+			overflow-x: auto;
+			scrollbar-width: none;
+			padding-bottom: 2px;
+		}
+
+		.notif-filters::-webkit-scrollbar {
+			display: none;
+		}
+
+		.notif-filter-btn {
+			background: rgba(255, 255, 255, .05);
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #6b7280;
+			padding: 7px 16px;
+			border-radius: 20px;
+			font-size: .78rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all .2s;
+			white-space: nowrap;
+			font-family: inherit;
+		}
+
+		.notif-filter-btn:hover {
+			background: rgba(255, 255, 255, .09);
+			color: #d1d5db;
+		}
+
+		.notif-filter-btn.active {
+			background: rgba(99, 102, 241, .15);
+			border-color: rgba(99, 102, 241, .3);
+			color: #a5b4fc;
+		}
+
+		/* ── Notification List ── */
+		.notif-list-wrap {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 18px;
+			overflow: hidden;
+		}
+
+		/* Each notification row */
+		.notif-item {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			padding: 14px 18px;
+			border-bottom: 1px solid rgba(255, 255, 255, .05);
+			cursor: pointer;
+			transition: background .15s;
+			position: relative;
+		}
+
+		.notif-item:last-child {
+			border-bottom: none;
+		}
+
+		.notif-item:hover {
+			background: rgba(255, 255, 255, .03);
+		}
+
+		.notif-item.unread {
+			background: rgba(99, 102, 241, .04);
+		}
+
+		.notif-item.unread:hover {
+			background: rgba(99, 102, 241, .07);
+		}
+
+		/* Unread bar */
+		.notif-item.unread::before {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 20%;
+			bottom: 20%;
+			width: 3px;
+			background: linear-gradient(180deg, #6366f1, #8b5cf6);
+			border-radius: 0 2px 2px 0;
+		}
+
+		/* Icon bubble */
+		.notif-icon-wrap {
+			position: relative;
+			flex-shrink: 0;
+		}
+
+		.notif-actor-av {
+			width: 44px;
+			height: 44px;
+			border-radius: 50%;
+			object-fit: cover;
+			background: #1a1a2e;
+			display: block;
+		}
+
+		.notif-type-badge {
+			position: absolute;
+			bottom: -3px;
+			right: -3px;
+			width: 20px;
+			height: 20px;
+			border-radius: 50%;
+			border: 2px solid #0d0d1a;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: .65rem;
+		}
+
+		.badge-like {
+			background: #1a0a10;
+		}
+
+		.badge-comment {
+			background: #0a1020;
+		}
+
+		.badge-follow {
+			background: #0a1a0a;
+		}
+
+		.badge-share {
+			background: #1a1500;
+		}
+
+		.badge-system {
+			background: #1a0a1a;
+		}
+
+		/* Content */
+		.notif-content {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.notif-text {
+			font-size: .85rem;
+			color: #d1d5db;
+			line-height: 1.45;
+			margin-bottom: 3px;
+		}
+
+		.notif-text strong {
+			color: #f1f1f8;
+			font-weight: 700;
+		}
+
+		.notif-time {
+			font-size: .72rem;
+			color: #4b5563;
+		}
+
+		/* Thumbnail */
+		.notif-thumb {
+			width: 44px;
+			height: 44px;
+			border-radius: 10px;
+			object-fit: cover;
+			background: #1a1a2e;
+			flex-shrink: 0;
+		}
+
+		/* Actions */
+		.notif-actions {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-shrink: 0;
+		}
+
+		.notif-read-btn {
+			background: none;
+			border: 1px solid rgba(255, 255, 255, .1);
+			color: #6b7280;
+			width: 26px;
+			height: 26px;
+			border-radius: 50%;
+			cursor: pointer;
+			font-size: .7rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: all .2s;
+		}
+
+		.notif-read-btn:hover {
+			background: rgba(99, 102, 241, .15);
+			border-color: rgba(99, 102, 241, .3);
+			color: #818cf8;
+		}
+
+		/* Unread dot */
+		.unread-dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background: #6366f1;
+			flex-shrink: 0;
+			box-shadow: 0 0 6px rgba(99, 102, 241, .5);
+		}
+
+		/* ── Date group header ── */
+		.notif-date-group {
+			padding: 10px 18px 6px;
+			font-size: .68rem;
+			font-weight: 700;
+			color: #374151;
+			text-transform: uppercase;
+			letter-spacing: .6px;
+			border-bottom: 1px solid rgba(255, 255, 255, .04);
+			background: rgba(255, 255, 255, .01);
+		}
+
+		/* ── Loading skeleton ── */
+		.notif-skeleton {
+			padding: 14px 18px;
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			border-bottom: 1px solid rgba(255, 255, 255, .04);
+		}
+
+		.sk-av {
+			width: 44px;
+			height: 44px;
+			border-radius: 50%;
+			background: #111122;
+			flex-shrink: 0;
+			animation: sk 1.4s infinite linear;
+		}
+
+		.sk-lines {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.sk-line {
+			height: 10px;
+			border-radius: 5px;
+			background: #111122;
+			animation: sk 1.4s infinite linear;
+		}
+
+		.sk-line.short {
+			width: 40%;
+		}
+
+		@keyframes sk {
+
+			0%,
+			100% {
+				opacity: .4;
+			}
+
+			50% {
+				opacity: .8;
+			}
+		}
+
+		/* ── Empty state ── */
+		.notif-empty {
+			text-align: center;
+			padding: 60px 20px;
+			color: #374151;
+		}
+
+		.notif-empty .empty-icon {
+			width: 64px;
+			height: 64px;
+			border-radius: 50%;
+			background: rgba(255, 255, 255, .03);
+			border: 1px solid rgba(255, 255, 255, .06);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: 0 auto 16px;
+			font-size: 1.6rem;
+		}
+
+		.notif-empty h3 {
+			font-size: 1rem;
+			color: #6b7280;
+			margin-bottom: 6px;
+		}
+
+		.notif-empty p {
+			font-size: .82rem;
+			color: #374151;
+		}
+
+		/* ── Toast ── */
+		.notif-toast {
+			position: fixed;
+			bottom: 80px;
+			left: 50%;
+			transform: translateX(-50%) translateY(20px);
+			background: #10b981;
+			color: #fff;
+			padding: 10px 22px;
+			border-radius: 24px;
+			font-size: .82rem;
+			font-weight: 600;
+			z-index: 9999;
+			opacity: 0;
+			transition: all .3s;
+			pointer-events: none;
+		}
+
+		.notif-toast.show {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="notif-page">
+
+		<!-- Header -->
+		<div class="notif-header">
+			<div class="notif-header-left">
+				<h1>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+						<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+						<path d="M13.73 21a2 2 0 0 1-3.46 0" />
+					</svg>
+					Notifications
+					<span class="notif-unread-pill" id="unreadCount" style="display:none">0</span>
+				</h1>
+				<p>Apni activity track karo</p>
+			</div>
+			<button class="mark-all-btn" id="markAllBtn">
+				<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+					<polyline points="20 6 9 17 4 12" />
+				</svg>
+				Sab read karo
+			</button>
+		</div>
+
+		<!-- Filter Tabs -->
+		<div class="notif-filters">
+			<button class="notif-filter-btn active" data-filter="all">Sab</button>
+			<button class="notif-filter-btn" data-filter="unread">Unread</button>
+			<button class="notif-filter-btn" data-filter="LIKE">❤️ Likes</button>
+			<button class="notif-filter-btn" data-filter="COMMENT">💬 Comments</button>
+			<button class="notif-filter-btn" data-filter="FOLLOW">👤 Follows</button>
+			<button class="notif-filter-btn" data-filter="SHARE">↗️ Shares</button>
+		</div>
+
+		<!-- List -->
+		<div class="notif-list-wrap" id="notifList">
+			<!-- Skeleton -->
+			<div id="skeletonLoader">
+				<div class="notif-skeleton" th:each="i : ${#numbers.sequence(1, 5)}">
+					<div class="sk-av"></div>
+					<div class="sk-lines">
+						<div class="sk-line"></div>
+						<div class="sk-line short"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- Toast -->
+	<div class="notif-toast" id="notifToast"></div>
+
+	<script>
+		/* ── Override notifications.js render with better UI ── */
+		let allNotifications = []
+		let activeFilter = 'all'
+
+		function getCsrfToken() {
+			const m = document.querySelector('meta[name="_csrf"]')
+			if (m) return m.getAttribute('content')
+			const c = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
+			return c ? decodeURIComponent(c[1]) : ''
+		}
+		function getCsrfHeader() {
+			const m = document.querySelector('meta[name="_csrf_header"]')
+			return m ? m.getAttribute('content') : 'X-CSRF-TOKEN'
+		}
+		function csrfH() {
+			const t = getCsrfToken(), h = getCsrfHeader()
+			return t ? {[h]: t} : {}
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			loadNotifications()
+			document.getElementById('markAllBtn')?.addEventListener('click', markAllRead)
+
+			document.querySelectorAll('.notif-filter-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					activeFilter = btn.dataset.filter || 'all'
+					document.querySelectorAll('.notif-filter-btn').forEach(b =>
+						b.classList.toggle('active', b === btn))
+					renderNotifications(allNotifications)
+				})
+			})
+
+			setInterval(loadNotifications, 30000)
+		})
+
+		async function loadNotifications() {
+			try {
+				const res = await fetch('/api/notifications')
+				const data = await res.json()
+				allNotifications = data || []
+				renderNotifications(allNotifications)
+				updateBadge(allNotifications.filter(n => !n.read).length)
+			} catch (e) {
+				showError()
+			}
+		}
+
+		function renderNotifications(notifications) {
+			const list = document.getElementById('notifList')
+			if (!list) return
+
+			// Filter
+			let filtered = notifications
+			if (activeFilter === 'unread') {
+				filtered = notifications.filter(n => !n.read)
+			} else if (!['all', 'unread'].includes(activeFilter)) {
+				filtered = notifications.filter(n => n.type?.toUpperCase() === activeFilter)
+			}
+
+			// Unread count pill
+			const unreadCount = notifications.filter(n => !n.read).length
+			const pill = document.getElementById('unreadCount')
+			if (pill) {
+				pill.textContent = unreadCount
+				pill.style.display = unreadCount > 0 ? 'inline-block' : 'none'
+			}
+
+			list.innerHTML = ''
+
+			if (!filtered.length) {
+				list.innerHTML = `
+      <div class="notif-empty">
+        <div class="empty-icon">${activeFilter === 'unread' ? '✅' : '🔕'}</div>
+        <h3>${activeFilter === 'unread' ? 'Sab read ho gayi!' : 'Koi notification nahi'}</h3>
+        <p>${activeFilter === 'unread' ? 'Abhi koi unread notification nahi hai' : 'Jab koi like, comment ya follow karega toh yahan dikhega'}</p>
+      </div>`
+				return
+			}
+
+			// Group by date
+			const groups = groupByDate(filtered)
+			Object.entries(groups).forEach(([label, items]) => {
+				const header = document.createElement('div')
+				header.className = 'notif-date-group'
+				header.textContent = label
+				list.appendChild(header)
+				items.forEach(n => list.appendChild(buildItem(n)))
+			})
+		}
+
+		function groupByDate(items) {
+			const groups = {}
+			const today = new Date(); today.setHours(0, 0, 0, 0)
+			const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1)
+
+			items.forEach(n => {
+				const d = new Date(n.createdAt || Date.now())
+				d.setHours(0, 0, 0, 0)
+				let label
+				if (d.getTime() === today.getTime()) label = 'Aaj'
+				else if (d.getTime() === yesterday.getTime()) label = 'Kal'
+				else label = d.toLocaleDateString('hi-IN', {day: 'numeric', month: 'long'})
+				if (!groups[label]) groups[label] = []
+				groups[label].push(n)
+			})
+			return groups
+		}
+
+		function buildItem(n) {
+			const div = document.createElement('div')
+			div.className = 'notif-item' + (n.read ? '' : ' unread')
+			div.dataset.id = n.id
+
+			div.addEventListener('click', e => {
+				if (e.target.closest('.notif-read-btn')) return
+				if (!n.read) markOneRead(n.id, div)
+				if (n.postId) location.href = '/reel/' + n.postId
+				else if (n.actorId) location.href = '/profile/user/' + n.actorId
+			})
+
+			const {icon, badgeClass, color} = getTypeInfo(n.type)
+
+			// Avatar + badge
+			const iconWrap = document.createElement('div')
+			iconWrap.className = 'notif-icon-wrap'
+
+			if (n.actorAvatar) {
+				const av = document.createElement('img')
+				av.className = 'notif-actor-av'
+				av.src = n.actorAvatar
+				av.onerror = () => {
+					av.style.display = 'none'
+					const fb = document.createElement('div')
+					fb.className = 'notif-actor-av'
+					fb.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:1.2rem;'
+					fb.textContent = '👤'
+					iconWrap.insertBefore(fb, iconWrap.firstChild)
+				}
+				iconWrap.appendChild(av)
+			} else {
+				const av = document.createElement('div')
+				av.className = 'notif-actor-av'
+				av.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:1.2rem;'
+				av.textContent = '👤'
+				iconWrap.appendChild(av)
+			}
+
+			const badge = document.createElement('div')
+			badge.className = `notif-type-badge ${badgeClass}`
+			badge.textContent = icon
+			iconWrap.appendChild(badge)
+
+			// Content
+			const content = document.createElement('div')
+			content.className = 'notif-content'
+
+			const text = document.createElement('div')
+			text.className = 'notif-text'
+			const actorName = n.actorName || n.fromUserName
+			if (actorName) {
+				const strong = document.createElement('strong')
+				strong.textContent = actorName + ' '
+				text.appendChild(strong)
+			}
+			const msgSpan = document.createElement('span')
+			msgSpan.textContent = n.message || fallbackMessage(n)
+			text.appendChild(msgSpan)
+
+			const time = document.createElement('div')
+			time.className = 'notif-time'
+			time.textContent = formatTime(n.createdAt)
+
+			content.append(text, time)
+
+			// Thumbnail
+			const actions = document.createElement('div')
+			actions.className = 'notif-actions'
+
+			const thumbUrl = n.thumbnail || n.postThumbnail
+			if (n.postId && thumbUrl) {
+				const thumb = document.createElement('img')
+				thumb.className = 'notif-thumb'
+				thumb.src = thumbUrl
+				thumb.onerror = () => thumb.style.display = 'none'
+				actions.appendChild(thumb)
+			}
+
+			if (!n.read) {
+				const dot = document.createElement('div')
+				dot.className = 'unread-dot'
+
+				const readBtn = document.createElement('button')
+				readBtn.className = 'notif-read-btn'
+				readBtn.title = 'Read mark karo'
+				readBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`
+				readBtn.addEventListener('click', e => {
+					e.stopPropagation()
+					markOneRead(n.id, div)
+				})
+				actions.append(dot, readBtn)
+			}
+
+			div.append(iconWrap, content, actions)
+			return div
+		}
+
+		function getTypeInfo(type) {
+			const map = {
+				LIKE: {icon: '❤️', badgeClass: 'badge-like', color: '#f43f5e'},
+				COMMENT: {icon: '💬', badgeClass: 'badge-comment', color: '#3b82f6'},
+				FOLLOW: {icon: '👤', badgeClass: 'badge-follow', color: '#10b981'},
+				SHARE: {icon: '↗️', badgeClass: 'badge-share', color: '#f59e0b'},
+				MENTION: {icon: '@', badgeClass: 'badge-system', color: '#8b5cf6'},
+				BOOKMARK: {icon: '🔖', badgeClass: 'badge-system', color: '#6366f1'},
+				SYSTEM: {icon: '🔔', badgeClass: 'badge-system', color: '#6366f1'},
+			}
+			return map[type?.toUpperCase()] || {icon: '🔔', badgeClass: 'badge-system', color: '#6366f1'}
+		}
+
+		function fallbackMessage(n) {
+			const type = (n.type || '').toUpperCase()
+			if (type === 'LIKE') return 'liked your post'
+			if (type === 'FOLLOW') return 'started following you'
+			if (type === 'SHARE') return 'shared your post'
+			if (type === 'COMMENT') return n.commentText ? `commented: ${n.commentText}` : 'commented on your post'
+			return 'new activity'
+		}
+
+		async function markOneRead(notifId, el) {
+			try {
+				await fetch(`/api/notifications/${notifId}/read`, {method: 'POST', headers: csrfH()})
+				el?.classList.remove('unread')
+				el?.querySelector('.unread-dot')?.remove()
+				el?.querySelector('.notif-read-btn')?.remove()
+				const n = allNotifications.find(x => x.id == notifId)
+				if (n) n.read = true
+				updateBadge(allNotifications.filter(x => !x.read).length)
+			} catch (e) {console.error(e)}
+		}
+
+		async function markAllRead() {
+			try {
+				await fetch('/api/notifications/read-all', {method: 'POST', headers: csrfH()})
+				allNotifications.forEach(n => n.read = true)
+				renderNotifications(allNotifications)
+				updateBadge(0)
+				toast('Sab notifications read ho gayi ✅')
+			} catch (e) {
+				const unread = allNotifications.filter(n => !n.read)
+				for (const n of unread) {
+					try {
+						await fetch(`/api/notifications/${n.id}/read`, {method: 'POST', headers: csrfH()})
+						n.read = true
+					} catch { }
+				}
+				renderNotifications(allNotifications)
+				updateBadge(0)
+			}
+		}
+
+		function updateBadge(count) {
+			document.title = count > 0 ? `(${count}) Notifications — AI Feed` : 'Notifications — AI Feed'
+			const bell = document.getElementById('notifBadge') || document.querySelector('.hdr-badge#notifBadge')
+			if (bell) {bell.textContent = count > 9 ? '9+' : count; bell.style.display = count > 0 ? 'flex' : 'none'}
+			const pill = document.getElementById('unreadCount')
+			if (pill) {pill.textContent = count; pill.style.display = count > 0 ? 'inline-block' : 'none'}
+		}
+
+		function formatTime(dateStr) {
+			if (!dateStr) return ''
+			const diff = Date.now() - new Date(dateStr).getTime()
+			const mins = Math.floor(diff / 60000)
+			if (mins < 1) return 'abhi'
+			if (mins < 60) return `${mins}m pehle`
+			const hrs = Math.floor(mins / 60)
+			if (hrs < 24) return `${hrs}h pehle`
+			const days = Math.floor(hrs / 24)
+			if (days < 7) return `${days}d pehle`
+			return new Date(dateStr).toLocaleDateString('hi-IN')
+		}
+
+		function showError() {
+			const list = document.getElementById('notifList')
+			list.innerHTML = `
+    <div class="notif-empty">
+      <div class="empty-icon">⚠️</div>
+      <h3>Load nahi hua</h3>
+      <p>Internet connection check karo aur reload karo</p>
+    </div>`
+		}
+
+		function toast(msg) {
+			const t = document.getElementById('notifToast')
+			t.textContent = msg; t.classList.add('show')
+			setTimeout(() => t.classList.remove('show'), 3000)
+		}
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,1767 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Upload Video | AI Feed</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		html,
+		body {
+			background: #07070f;
+			color: #f1f1f8;
+			font-family: 'Segoe UI', sans-serif;
+			margin: 0
+		}
+
+		.upload-page {
+			max-width: 960px;
+			margin: 0 auto;
+			padding: 80px 20px 100px;
+		}
+
+		/* â”€â”€ Page header â”€â”€ */
+		.page-hdr {
+			margin-bottom: 28px
+		}
+
+		.page-hdr h1 {
+			font-size: 1.5rem;
+			font-weight: 800;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin-bottom: 4px;
+		}
+
+		.page-hdr p {
+			color: #6b7280;
+			font-size: .85rem
+		}
+
+		/* â”€â”€ Two column layout â”€â”€ */
+		.upload-layout {
+			display: grid;
+			grid-template-columns: 1fr 340px;
+			gap: 20px;
+			align-items: start;
+		}
+
+		@media(max-width:768px) {
+			.upload-layout {
+				grid-template-columns: 1fr
+			}
+		}
+
+		/* â”€â”€ Card base â”€â”€ */
+		.up-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 18px;
+			padding: 22px;
+		}
+
+		.up-card-title {
+			font-size: .82rem;
+			font-weight: 700;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: .5px;
+			margin-bottom: 16px;
+		}
+
+		/* â”€â”€ Drop Zone â”€â”€ */
+		.drop-zone {
+			border: 2px dashed rgba(255, 255, 255, .1);
+			border-radius: 16px;
+			padding: 36px 20px;
+			text-align: center;
+			cursor: pointer;
+			transition: all .25s;
+			background: rgba(255, 255, 255, .02);
+			position: relative;
+			overflow: hidden;
+		}
+
+		.drop-zone:hover,
+		.drop-zone.drag-over {
+			border-color: #6366f1;
+			background: rgba(99, 102, 241, .06);
+		}
+
+		.drop-zone input[type=file] {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
+			cursor: pointer;
+			z-index: 2;
+		}
+
+		.dz-icon {
+			width: 56px;
+			height: 56px;
+			margin: 0 auto 14px;
+			background: linear-gradient(135deg, rgba(99, 102, 241, .15), rgba(139, 92, 246, .1));
+			border: 1px solid rgba(99, 102, 241, .2);
+			border-radius: 16px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: all .25s;
+		}
+
+		.drop-zone:hover .dz-icon,
+		.drop-zone.drag-over .dz-icon {
+			background: linear-gradient(135deg, rgba(99, 102, 241, .25), rgba(139, 92, 246, .2));
+			border-color: rgba(99, 102, 241, .4);
+			transform: scale(1.05);
+		}
+
+		.dz-icon svg {
+			display: block
+		}
+
+		.dz-title {
+			font-size: .95rem;
+			font-weight: 600;
+			color: #d1d5db;
+			margin-bottom: 5px
+		}
+
+		.dz-sub {
+			font-size: .78rem;
+			color: #4b5563
+		}
+
+		.dz-formats {
+			display: flex;
+			gap: 6px;
+			justify-content: center;
+			margin-top: 10px;
+			flex-wrap: wrap;
+		}
+
+		.dz-fmt {
+			background: rgba(255, 255, 255, .05);
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #6b7280;
+			padding: 2px 10px;
+			border-radius: 20px;
+			font-size: .7rem;
+			font-weight: 600;
+		}
+
+		/* Has file state */
+		.drop-zone.has-file {
+			border-style: solid;
+			border-color: rgba(16, 185, 129, .35);
+			background: rgba(16, 185, 129, .04);
+		}
+
+		.drop-zone.has-file .dz-icon {
+			background: rgba(16, 185, 129, .12);
+			border-color: rgba(16, 185, 129, .3);
+		}
+
+		/* â”€â”€ Video Preview â”€â”€ */
+		.preview-wrap {
+			margin-top: 14px;
+			display: none;
+			position: relative;
+			border-radius: 12px;
+			overflow: hidden;
+		}
+
+		.preview-wrap video {
+			width: 100%;
+			max-height: 220px;
+			object-fit: cover;
+			display: block;
+			background: #000;
+			border-radius: 12px;
+		}
+
+		.preview-info {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin-top: 10px;
+			padding: 10px 14px;
+			background: rgba(16, 185, 129, .08);
+			border: 1px solid rgba(16, 185, 129, .15);
+			border-radius: 10px;
+		}
+
+		.preview-info-icon {
+			font-size: 1.2rem;
+			flex-shrink: 0
+		}
+
+		.preview-file-name {
+			font-size: .82rem;
+			font-weight: 600;
+			color: #6ee7b7;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			flex: 1;
+		}
+
+		.preview-file-size {
+			font-size: .72rem;
+			color: #4b5563;
+			flex-shrink: 0
+		}
+
+		.preview-remove {
+			background: none;
+			border: none;
+			color: #6b7280;
+			cursor: pointer;
+			padding: 4px;
+			font-size: .85rem;
+			flex-shrink: 0;
+			transition: color .2s;
+		}
+
+		.preview-remove:hover {
+			color: #f43f5e
+		}
+
+		/* â”€â”€ Form Fields â”€â”€ */
+		.form-group {
+			margin-bottom: 16px
+		}
+
+		.form-group label {
+			display: block;
+			font-size: .72rem;
+			font-weight: 700;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: .5px;
+			margin-bottom: 6px;
+		}
+
+		.form-group input,
+		.form-group textarea,
+		.form-group select {
+			width: 100%;
+			background: rgba(255, 255, 255, .04);
+			border: 1.5px solid rgba(255, 255, 255, .08);
+			border-radius: 12px;
+			padding: 10px 14px;
+			color: #f1f1f8;
+			font-size: .88rem;
+			font-family: inherit;
+			outline: none;
+			transition: border-color .2s, box-shadow .2s, background .2s;
+			box-sizing: border-box;
+		}
+
+		.form-group input:focus,
+		.form-group textarea:focus,
+		.form-group select:focus {
+			border-color: #6366f1;
+			background: rgba(99, 102, 241, .06);
+			box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
+		}
+
+		.form-group input::placeholder,
+		.form-group textarea::placeholder {
+			color: rgba(255, 255, 255, .2);
+		}
+
+		.form-group textarea {
+			resize: vertical;
+			min-height: 88px;
+			line-height: 1.6
+		}
+
+		.form-group select option {
+			background: #0d0d1a
+		}
+
+		.char-hint {
+			font-size: .68rem;
+			color: #4b5563;
+			text-align: right;
+			margin-top: 3px;
+		}
+
+		.char-hint.warn {
+			color: #f59e0b
+		}
+
+		.char-hint.over {
+			color: #f43f5e
+		}
+
+		/* â”€â”€ Hashtag chips â”€â”€ */
+		.tag-chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+			margin-top: 8px
+		}
+
+		.tag-chip {
+			background: rgba(99, 102, 241, .12);
+			border: 1px solid rgba(99, 102, 241, .25);
+			color: #818cf8;
+			padding: 4px 10px;
+			border-radius: 20px;
+			font-size: .75rem;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.tag-chip-rm {
+			cursor: pointer;
+			color: #6b7280;
+			font-size: .7rem;
+			background: none;
+			border: none;
+			padding: 0;
+			line-height: 1;
+			transition: color .15s;
+		}
+
+		.tag-chip-rm:hover {
+			color: #f43f5e
+		}
+
+		.tag-suggestions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+			margin-top: 8px
+		}
+
+		.tag-sug {
+			background: rgba(255, 255, 255, .04);
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #6b7280;
+			padding: 4px 10px;
+			border-radius: 20px;
+			font-size: .72rem;
+			cursor: pointer;
+			transition: all .15s;
+		}
+
+		.tag-sug:hover {
+			border-color: rgba(99, 102, 241, .4);
+			color: #818cf8;
+			background: rgba(99, 102, 241, .08)
+		}
+
+		/* â”€â”€ Privacy toggle â”€â”€ */
+		.privacy-options {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap
+		}
+
+		.privacy-opt {
+			flex: 1;
+			min-width: 80px;
+			background: rgba(255, 255, 255, .04);
+			border: 1.5px solid rgba(255, 255, 255, .08);
+			border-radius: 12px;
+			padding: 10px 12px;
+			text-align: center;
+			cursor: pointer;
+			transition: all .2s;
+		}
+
+		.privacy-opt:hover {
+			background: rgba(255, 255, 255, .07)
+		}
+
+		.privacy-opt.selected {
+			background: rgba(99, 102, 241, .12);
+			border-color: rgba(99, 102, 241, .35);
+		}
+
+		.privacy-opt input {
+			display: none
+		}
+
+		.privacy-opt .po-icon {
+			font-size: 1.2rem;
+			display: block;
+			margin-bottom: 3px
+		}
+
+		.privacy-opt .po-label {
+			font-size: .72rem;
+			font-weight: 600;
+			color: #9ca3af
+		}
+
+		.privacy-opt.selected .po-label {
+			color: #818cf8
+		}
+
+		/* â”€â”€ Upload Progress â”€â”€ */
+		.progress-section {
+			display: none;
+			margin-top: 0;
+			background: rgba(99, 102, 241, .06);
+			border: 1px solid rgba(99, 102, 241, .15);
+			border-radius: 14px;
+			padding: 18px;
+		}
+
+		.progress-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 12px;
+		}
+
+		.progress-title {
+			font-size: .85rem;
+			font-weight: 700;
+			color: #a5b4fc
+		}
+
+		.progress-pct {
+			font-size: .82rem;
+			font-weight: 800;
+			color: #6366f1
+		}
+
+		.progress-track {
+			height: 8px;
+			background: rgba(255, 255, 255, .07);
+			border-radius: 4px;
+			overflow: hidden;
+			margin-bottom: 10px;
+		}
+
+		.progress-fill {
+			height: 100%;
+			width: 0%;
+			background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+			border-radius: 4px;
+			transition: width .3s ease;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.progress-fill::after {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: -100%;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .3), transparent);
+			animation: shimmer 1.5s infinite;
+		}
+
+		@keyframes shimmer {
+			to {
+				left: 100%
+			}
+		}
+
+		.progress-steps {
+			display: flex;
+			gap: 6px
+		}
+
+		.progress-step {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			font-size: .7rem;
+			color: #4b5563;
+		}
+
+		.progress-step.done {
+			color: #10b981
+		}
+
+		.progress-step.active {
+			color: #818cf8;
+			font-weight: 600
+		}
+
+		.progress-step-dot {
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background: currentColor;
+			flex-shrink: 0;
+		}
+
+		.progress-step.active .progress-step-dot {
+			animation: stepPulse 1s infinite;
+		}
+
+		@keyframes stepPulse {
+
+			0%,
+			100% {
+				opacity: 1
+			}
+
+			50% {
+				opacity: .3
+			}
+		}
+
+		/* â”€â”€ Right sidebar cards â”€â”€ */
+		.preview-card-video {
+			aspect-ratio: 9/16;
+			border-radius: 14px;
+			overflow: hidden;
+			background: #000;
+			position: relative;
+			margin-bottom: 14px;
+		}
+
+		.preview-card-video video {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+		}
+
+		.preview-placeholder {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			color: #374151;
+			gap: 8px;
+			font-size: .82rem;
+		}
+
+		.preview-placeholder svg {
+			opacity: .3
+		}
+
+		/* Tips card */
+		.tip-item {
+			display: flex;
+			align-items: flex-start;
+			gap: 10px;
+			padding: 10px 0;
+			border-bottom: 1px solid rgba(255, 255, 255, .05);
+			font-size: .8rem;
+			color: #9ca3af;
+			line-height: 1.5;
+		}
+
+		.tip-item:last-child {
+			border-bottom: none
+		}
+
+		.tip-icon {
+			font-size: 1rem;
+			flex-shrink: 0;
+			margin-top: 1px
+		}
+
+		/* â”€â”€ Submit button â”€â”€ */
+		.upload-btn {
+			width: 100%;
+			padding: 14px;
+			background: linear-gradient(135deg, #6366f1, #8b5cf6);
+			color: #fff;
+			border: none;
+			border-radius: 14px;
+			font-size: .95rem;
+			font-weight: 700;
+			font-family: inherit;
+			cursor: pointer;
+			transition: all .2s;
+			margin-top: 4px;
+			box-shadow: 0 4px 20px rgba(99, 102, 241, .3);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+		}
+
+		.upload-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 28px rgba(99, 102, 241, .4)
+		}
+
+		.upload-btn:active {
+			transform: translateY(0)
+		}
+
+		.upload-btn:disabled {
+			opacity: .45;
+			cursor: not-allowed;
+			transform: none;
+			box-shadow: none;
+		}
+
+		/* â”€â”€ Success screen â”€â”€ */
+		.success-screen {
+			display: none;
+			text-align: center;
+			padding: 40px 20px;
+			animation: fadeIn .4s ease;
+		}
+
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+				transform: translateY(10px)
+			}
+
+			to {
+				opacity: 1;
+				transform: translateY(0)
+			}
+		}
+
+		.success-circle {
+			width: 80px;
+			height: 80px;
+			border-radius: 50%;
+			background: linear-gradient(135deg, rgba(16, 185, 129, .2), rgba(16, 185, 129, .08));
+			border: 2px solid rgba(16, 185, 129, .3);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: 0 auto 18px;
+			animation: popIn .5s cubic-bezier(.34, 1.56, .64, 1);
+		}
+
+		@keyframes popIn {
+			from {
+				transform: scale(0)
+			}
+
+			to {
+				transform: scale(1)
+			}
+		}
+
+		.success-title {
+			font-size: 1.3rem;
+			font-weight: 800;
+			color: #fff;
+			margin-bottom: 6px
+		}
+
+		.success-sub {
+			font-size: .85rem;
+			color: #6b7280;
+			margin-bottom: 24px
+		}
+
+		.success-actions {
+			display: flex;
+			gap: 10px;
+			justify-content: center;
+			flex-wrap: wrap
+		}
+
+		.btn-go-feed {
+			background: linear-gradient(135deg, #6366f1, #8b5cf6);
+			color: #fff;
+			padding: 10px 24px;
+			border-radius: 24px;
+			text-decoration: none;
+			font-weight: 700;
+			font-size: .85rem;
+			transition: opacity .2s;
+		}
+
+		.btn-go-feed:hover {
+			opacity: .85
+		}
+
+		.btn-upload-more {
+			background: rgba(255, 255, 255, .06);
+			border: 1px solid rgba(255, 255, 255, .1);
+			color: #9ca3af;
+			padding: 10px 24px;
+			border-radius: 24px;
+			cursor: pointer;
+			font-weight: 600;
+			font-size: .85rem;
+			transition: all .2s;
+			font-family: inherit;
+		}
+
+		.btn-upload-more:hover {
+			background: rgba(255, 255, 255, .1);
+			color: #fff
+		}
+
+		.camera-shell {
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+		}
+
+		.camera-stage {
+			position: relative;
+			border-radius: 18px;
+			overflow: hidden;
+			background: #05050b;
+			border: 1px solid rgba(255, 255, 255, .08);
+			aspect-ratio: 9 / 16;
+			touch-action: pan-y;
+			user-select: none;
+		}
+
+		#cameraCanvas {
+			width: 100%;
+			height: 100%;
+			display: block;
+			object-fit: cover;
+			background: #000;
+		}
+
+		.camera-placeholder,
+		.camera-status {
+			position: absolute;
+			left: 50%;
+			transform: translateX(-50%);
+			background: rgba(7, 7, 15, .78);
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #d1d5db;
+			padding: 8px 12px;
+			border-radius: 999px;
+			font-size: .74rem;
+			text-align: center;
+			max-width: calc(100% - 28px);
+			backdrop-filter: blur(12px);
+		}
+
+		.camera-placeholder {
+			top: 50%;
+			transform: translate(-50%, -50%);
+			line-height: 1.5;
+		}
+
+		.camera-status {
+			top: 14px;
+		}
+
+		.camera-filter-badge {
+			position: absolute;
+			right: 14px;
+			top: 14px;
+			background: rgba(15, 23, 42, .84);
+			border: 1px solid rgba(255, 255, 255, .1);
+			color: #f8fafc;
+			padding: 8px 12px;
+			border-radius: 999px;
+			font-size: .72rem;
+			font-weight: 700;
+			backdrop-filter: blur(12px);
+		}
+
+		.camera-swipe-hint {
+			position: absolute;
+			left: 50%;
+			bottom: 14px;
+			transform: translateX(-50%);
+			background: rgba(15, 23, 42, .72);
+			border: 1px solid rgba(255, 255, 255, .08);
+			color: #cbd5e1;
+			padding: 7px 12px;
+			border-radius: 999px;
+			font-size: .71rem;
+			max-width: calc(100% - 28px);
+			text-align: center;
+			backdrop-filter: blur(12px);
+		}
+
+		.camera-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+
+		.camera-btn {
+			border: 1px solid rgba(255, 255, 255, .12);
+			background: rgba(255, 255, 255, .04);
+			color: #f1f1f8;
+			border-radius: 999px;
+			padding: 10px 16px;
+			font-size: .8rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: transform .18s, border-color .18s, background .18s;
+		}
+
+		.camera-btn:hover:not(:disabled) {
+			transform: translateY(-1px);
+			border-color: rgba(99, 102, 241, .35);
+		}
+
+		.camera-btn:disabled {
+			opacity: .45;
+			cursor: not-allowed;
+		}
+
+		.camera-btn.primary {
+			background: linear-gradient(135deg, #4f46e5, #7c3aed);
+			border-color: transparent;
+		}
+
+		.camera-btn.danger {
+			background: rgba(239, 68, 68, .12);
+			border-color: rgba(239, 68, 68, .28);
+			color: #fca5a5;
+		}
+
+		.camera-btn.recording {
+			background: rgba(239, 68, 68, .18);
+			border-color: rgba(239, 68, 68, .3);
+			color: #fecaca;
+		}
+
+		.filter-toolbar {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.filter-toolbar-label {
+			font-size: .72rem;
+			font-weight: 700;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: .5px;
+		}
+
+		.filter-list {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+		}
+
+		.filter-chip {
+			border: 1px solid rgba(255, 255, 255, .09);
+			background: rgba(255, 255, 255, .04);
+			color: #d1d5db;
+			padding: 8px 12px;
+			border-radius: 999px;
+			font-size: .78rem;
+			font-weight: 600;
+			cursor: pointer;
+		}
+
+		.filter-chip.active {
+			background: rgba(99, 102, 241, .15);
+			border-color: rgba(99, 102, 241, .35);
+			color: #c7d2fe;
+		}
+
+		.camera-note {
+			font-size: .74rem;
+			color: #9ca3af;
+			line-height: 1.5;
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="upload-page">
+
+		<div class="page-hdr">
+			<h1>
+				<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+					<polyline points="17 8 12 3 7 8" />
+					<line x1="12" y1="3" x2="12" y2="15" />
+				</svg>
+				Video Upload Karo
+			</h1>
+			<p>Apna content duniya ke saath share karo</p>
+		</div>
+
+		<div class="upload-layout">
+
+			<!-- â”€â”€ Left: Upload form â”€â”€ -->
+			<div>
+
+				<!-- Drop Zone -->
+				<div class="up-card" style="margin-bottom:16px">
+					<div class="up-card-title">Video File</div>
+					<div class="drop-zone" id="dropZone">
+						<input type="file" id="videoFile" accept="video/mp4,.mp4" capture="environment" onchange="onFileSelect(this)">
+						<div class="dz-icon">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1"
+								stroke-width="2">
+								<polyline points="16 16 12 12 8 16" />
+								<line x1="12" y1="12" x2="12" y2="21" />
+								<path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+							</svg>
+						</div>
+						<div class="dz-title">Yahan drag karo ya click karke select karo</div>
+						<div class="dz-sub">Maximum 10MB</div>
+						<div class="dz-formats">
+							<span class="dz-fmt">MP4</span>
+						</div>
+					</div>
+
+					<!-- Preview -->
+					<div class="preview-wrap" id="previewWrap">
+						<video id="videoPreview" controls muted playsinline></video>
+					</div>
+					<div class="preview-info" id="previewInfo" style="display:none">
+						<span class="preview-info-icon">FILE</span>
+						<span class="preview-file-name" id="previewFileName"></span>
+						<span class="preview-file-size" id="previewFileSize"></span>
+						<button class="preview-remove" onclick="removeFile()" title="Remove">x</button>
+					</div>
+				</div>
+
+				<div class="up-card" style="margin-bottom:16px">
+					<div class="up-card-title">Camera Studio</div>
+					<div class="camera-shell">
+						<div class="camera-stage">
+							<video id="cameraSource" playsinline muted style="display:none"></video>
+							<canvas id="cameraCanvas"></canvas>
+							<div class="camera-placeholder" id="cameraPlaceholder">
+								Start Camera dabao aur direct reel record karo.
+							</div>
+							<div class="camera-status" id="cameraStatus">Camera off</div>
+							<div class="camera-filter-badge" id="cameraFilterBadge">Original</div>
+							<div class="camera-swipe-hint" id="cameraSwipeHint">Swipe left or right to change filter live</div>
+						</div>
+
+						<div class="camera-actions">
+							<button class="camera-btn primary" id="startCameraBtn" onclick="startCamera()">Start Camera</button>
+							<button class="camera-btn" id="recordCameraBtn" onclick="toggleRecording()" disabled>Start Recording</button>
+							<button class="camera-btn" id="useRecordingBtn" onclick="useRecordedVideo()" disabled>Use Recording</button>
+							<button class="camera-btn danger" id="stopCameraBtn" onclick="stopCamera()" disabled>Stop Camera</button>
+						</div>
+
+						<div class="filter-toolbar">
+							<div class="filter-toolbar-label">Live Filters</div>
+							<div class="filter-list" id="filterList"></div>
+						</div>
+
+						<div class="camera-note">
+							Selected filter live preview aur recording dono par lagega. Snapchat ki tarah preview par left ya right swipe karke filter change kar sakte ho.
+						</div>
+					</div>
+				</div>
+
+				<!-- Form -->
+				<div class="up-card" style="margin-bottom:16px">
+					<div class="up-card-title">Video Details</div>
+
+					<div class="form-group">
+						<label>Caption</label>
+						<textarea id="captionInput" placeholder="Apni video ke baare mein likhein..." maxlength="500"
+							oninput="updateChar(this,'captionChar',500)"></textarea>
+						<div class="char-hint" id="captionChar">0 / 500</div>
+					</div>
+
+					<div class="form-group">
+						<label>Hashtags</label>
+						<input type="text" id="tagInput" placeholder="#tag likhein aur Enter dabaein..."
+							onkeydown="onTagKey(event)">
+						<input type="hidden" id="tagsHidden">
+						<div class="tag-chips" id="tagChips"></div>
+						<div class="tag-suggestions">
+							<span class="tag-sug" onclick="addTag('viral')">viral</span>
+							<span class="tag-sug" onclick="addTag('trending')">trending</span>
+							<span class="tag-sug" onclick="addTag('funny')">funny</span>
+							<span class="tag-sug" onclick="addTag('music')">music</span>
+							<span class="tag-sug" onclick="addTag('dance')">dance</span>
+							<span class="tag-sug" onclick="addTag('food')">food</span>
+							<span class="tag-sug" onclick="addTag('travel')">travel</span>
+							<span class="tag-sug" onclick="addTag('comedy')">comedy</span>
+							<span class="tag-sug" onclick="addTag('tech')">tech</span>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label>Privacy</label>
+						<div class="privacy-options">
+							<label class="privacy-opt selected" onclick="selectPrivacy(this,'public')">
+								<input type="radio" name="privacy" value="public" checked>
+								<span class="po-icon">ALL</span>
+								<span class="po-label">Public</span>
+							</label>
+							<label class="privacy-opt" onclick="selectPrivacy(this,'followers')">
+								<input type="radio" name="privacy" value="followers">
+								<span class="po-icon">FOL</span>
+								<span class="po-label">Followers</span>
+							</label>
+							<label class="privacy-opt" onclick="selectPrivacy(this,'private')">
+								<input type="radio" name="privacy" value="private">
+								<span class="po-icon">ME</span>
+								<span class="po-label">Private</span>
+							</label>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label>Schedule (optional)</label>
+						<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+							<label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px;color:#e5e7eb">
+								<input type="checkbox" id="scheduleEnabled" onchange="toggleSchedule(this)" />
+								<span>Publish later</span>
+							</label>
+							<input type="datetime-local" id="scheduledAtInput" disabled
+								style="background:#0b0b0b;color:#fff;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;width:220px" />
+						</div>
+						<div class="char-hint" style="margin-top:8px">Future time set karo; warna normal publish hoga.</div>
+					</div>
+				</div>
+
+				<!-- Progress -->
+				<div class="progress-section" id="progressSection">
+					<div class="progress-header">
+						<span class="progress-title" id="progressTitle">Uploading...</span>
+						<span class="progress-pct" id="progressPct">0%</span>
+					</div>
+					<div class="progress-track">
+						<div class="progress-fill" id="progressFill"></div>
+					</div>
+					<div class="progress-steps">
+						<div class="progress-step active" id="step-upload">
+							<span class="progress-step-dot"></span>Upload
+						</div>
+						<div class="progress-step" id="step-process">
+							<span class="progress-step-dot"></span>Processing
+						</div>
+						<div class="progress-step" id="step-done">
+							<span class="progress-step-dot"></span>Done
+						</div>
+					</div>
+				</div>
+
+				<!-- Upload Button -->
+				<button class="upload-btn" id="uploadBtn" onclick="startUpload()" disabled>
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+						stroke-width="2.5">
+						<polyline points="16 16 12 12 8 16" />
+						<line x1="12" y1="12" x2="12" y2="21" />
+						<path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+					</svg>
+					Video Upload Karo
+				</button>
+
+				<!-- Success -->
+				<div class="success-screen" id="successScreen">
+					<div class="success-circle">
+						<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
+							<polyline points="20 6 9 17 4 12" />
+						</svg>
+					</div>
+					<div class="success-title">Video Upload Ho Gayi!</div>
+					<div class="success-sub">Aapki video feed mein dikhi jayegi</div>
+					<div class="success-actions">
+						<a href="/feed" class="btn-go-feed">Open Feed</a>
+						<button class="btn-upload-more" onclick="resetAll()">Aur Upload Karo</button>
+					</div>
+				</div>
+
+			</div>
+
+			<!-- â”€â”€ Right: Preview + Tips â”€â”€ -->
+			<div>
+
+				<!-- Phone preview -->
+				<div class="up-card" style="margin-bottom:16px">
+					<div class="up-card-title">Feed Preview</div>
+					<div class="preview-card-video" id="previewPhone">
+						<div class="preview-placeholder" id="phonePlaceholder">
+							<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+								stroke-width="1.5">
+								<polygon points="23 7 16 12 23 17 23 7" />
+								<rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+							</svg>
+							Video select karo preview ke liye
+						</div>
+						<video id="phonePreview" style="display:none;width:100%;height:100%;object-fit:cover" muted loop
+							playsinline></video>
+					</div>
+					<div id="videoMeta"
+						style="display:none;font-size:.75rem;color:#6b7280;text-align:center;margin-top:8px"></div>
+				</div>
+
+				<!-- Tips -->
+				<div class="up-card">
+					<div class="up-card-title">Tips</div>
+					<div class="tip-item">
+						<span class="tip-icon">1</span>
+						<span>Vertical video (9:16) best hoti hai - mobile pe full screen dikhti hai</span>
+					</div>
+					<div class="tip-item">
+						<span class="tip-icon">2</span>
+						<span>15-60 second ki videos sabse zyada views milti hain</span>
+					</div>
+					<div class="tip-item">
+						<span class="tip-icon">3</span>
+						<span>3-5 relevant hashtags add karo - zyada discoverability milegi</span>
+					</div>
+					<div class="tip-item">
+						<span class="tip-icon">4</span>
+						<span>Pehle 3 second mein kuch interesting dikhao - scroll band hogi</span>
+					</div>
+					<div class="tip-item">
+						<span class="tip-icon">5</span>
+						<span>Good audio quality bahut zaroori hai - background noise avoid karo</span>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+		<script>
+		// Add a new filter by pushing another object here with a unique id, label, and CSS filter string.
+		const FILTERS = [
+			{ id: 'none', label: 'Original', css: 'none' },
+			{ id: 'cinema', label: 'Cinema', css: 'contrast(1.08) saturate(1.12) brightness(0.96)' },
+			{ id: 'warm', label: 'Warm', css: 'saturate(1.16) sepia(0.16) brightness(1.03)' },
+			{ id: 'cool', label: 'Cool', css: 'saturate(0.92) hue-rotate(190deg) brightness(1.02)' },
+			{ id: 'mono', label: 'Mono', css: 'grayscale(1) contrast(1.04)' },
+			{ id: 'pop', label: 'Pop', css: 'saturate(1.32) contrast(1.08)' },
+			{ id: 'teal-gold', label: 'Teal Gold', css: 'contrast(1.12) saturate(1.08) sepia(0.12) hue-rotate(340deg) brightness(0.96)' },
+			{ id: 'sunset', label: 'Sunset', css: 'saturate(1.2) sepia(0.24) hue-rotate(335deg) brightness(1.02) contrast(1.04)' },
+			{ id: 'noir', label: 'Noir', css: 'grayscale(1) contrast(1.24) brightness(0.92)' },
+			{ id: 'dream', label: 'Dream', css: 'brightness(1.08) saturate(0.9) contrast(0.94) blur(0.35px)' },
+			{ id: 'neo-night', label: 'Neo Night', css: 'contrast(1.16) saturate(1.18) hue-rotate(210deg) brightness(0.9)' }
+		]
+
+		const tags = []
+		let selectedFile = null
+		let previewUrl = ''
+		let activeFilterId = 'none'
+		let cameraStream = null
+		let cameraFrame = null
+		let mediaRecorder = null
+		let recordedChunks = []
+		let recordedFile = null
+		let recordingStream = null
+		let filterSwipeStartX = null
+		let filterSwipeStartY = null
+
+		document.addEventListener('DOMContentLoaded', () => {
+			renderFilterOptions()
+			wireDropZone()
+			bindFilterSwipe()
+			updateCameraFilterBadge()
+			paintCameraIdle()
+		})
+
+		function wireDropZone() {
+			const dropZone = document.getElementById('dropZone')
+			if (!dropZone) return
+
+			dropZone.addEventListener('dragover', event => {
+				event.preventDefault()
+				dropZone.classList.add('drag-over')
+			})
+
+			dropZone.addEventListener('dragleave', () => {
+				dropZone.classList.remove('drag-over')
+			})
+
+			dropZone.addEventListener('drop', event => {
+				event.preventDefault()
+				dropZone.classList.remove('drag-over')
+
+				const file = event.dataTransfer?.files?.[0]
+				if (!file) return
+
+				syncFileInput(file)
+				applyVideoFile(file)
+			})
+		}
+
+		function renderFilterOptions() {
+			const filterList = document.getElementById('filterList')
+			if (!filterList) return
+
+			filterList.innerHTML = FILTERS.map(filter => `
+				<button
+					type="button"
+					class="filter-chip${filter.id === activeFilterId ? ' active' : ''}"
+					data-filter-id="${filter.id}"
+					onclick="setActiveFilter('${filter.id}')">
+					${filter.label}
+				</button>
+			`).join('')
+		}
+
+		function getActiveFilter() {
+			return FILTERS.find(filter => filter.id === activeFilterId) || FILTERS[0]
+		}
+
+		function setActiveFilter(filterId) {
+			activeFilterId = filterId
+			renderFilterOptions()
+			updateCameraFilterBadge()
+			applyFilterPreview()
+		}
+
+		function changeFilterBy(step) {
+			const currentIndex = FILTERS.findIndex(filter => filter.id === activeFilterId)
+			const safeIndex = currentIndex >= 0 ? currentIndex : 0
+			const nextIndex = (safeIndex + step + FILTERS.length) % FILTERS.length
+			setActiveFilter(FILTERS[nextIndex].id)
+		}
+
+		function updateCameraFilterBadge() {
+			const badge = document.getElementById('cameraFilterBadge')
+			if (badge) {
+				badge.textContent = getActiveFilter().label
+			}
+		}
+
+		function bindFilterSwipe() {
+			const stage = document.querySelector('.camera-stage')
+			if (!stage) return
+
+			stage.addEventListener('pointerdown', event => {
+				if (event.pointerType === 'mouse' && event.button !== 0) return
+				filterSwipeStartX = event.clientX
+				filterSwipeStartY = event.clientY
+			})
+
+			stage.addEventListener('pointerup', event => {
+				if (filterSwipeStartX === null || filterSwipeStartY === null) return
+
+				const diffX = event.clientX - filterSwipeStartX
+				const diffY = event.clientY - filterSwipeStartY
+				filterSwipeStartX = null
+				filterSwipeStartY = null
+
+				if (Math.abs(diffX) < 36 || Math.abs(diffX) <= Math.abs(diffY)) return
+				changeFilterBy(diffX < 0 ? 1 : -1)
+			})
+
+			stage.addEventListener('pointercancel', () => {
+				filterSwipeStartX = null
+				filterSwipeStartY = null
+			})
+		}
+
+		function applyFilterPreview() {
+			const css = getActiveFilter().css
+			;['videoPreview', 'phonePreview'].forEach(id => {
+				const video = document.getElementById(id)
+				if (video) video.style.filter = css
+			})
+		}
+
+		function onFileSelect(input) {
+			const file = input?.files?.[0]
+			if (!file) return
+			applyVideoFile(file)
+		}
+
+		function applyVideoFile(file) {
+			if (!validateVideoFile(file)) {
+				clearSelectedFileInput()
+				return
+			}
+
+			selectedFile = file
+			recordedFile = file
+			clearPreviewUrl()
+			previewUrl = URL.createObjectURL(file)
+
+			const videoPreview = document.getElementById('videoPreview')
+			const phonePreview = document.getElementById('phonePreview')
+			if (videoPreview) {
+				videoPreview.src = previewUrl
+				videoPreview.load()
+			}
+			if (phonePreview) {
+				phonePreview.src = previewUrl
+				phonePreview.style.display = 'block'
+				phonePreview.load()
+				phonePreview.play().catch(() => {})
+			}
+
+			document.getElementById('previewWrap').style.display = 'block'
+			document.getElementById('previewInfo').style.display = 'flex'
+			document.getElementById('previewFileName').textContent = file.name
+			document.getElementById('previewFileSize').textContent = formatFileSize(file.size)
+			document.getElementById('dropZone').classList.add('has-file')
+			document.getElementById('phonePlaceholder').style.display = 'none'
+			document.getElementById('uploadBtn').disabled = false
+			document.getElementById('useRecordingBtn').disabled = !recordedFile
+
+			videoPreview.onloadedmetadata = () => {
+				const duration = Number.isFinite(videoPreview.duration) ? Math.round(videoPreview.duration) : 0
+				const minutes = Math.floor(duration / 60)
+				const seconds = String(duration % 60).padStart(2, '0')
+				const extension = (file.type.split('/')[1] || 'video').toUpperCase()
+				document.getElementById('videoMeta').style.display = 'block'
+				document.getElementById('videoMeta').textContent = `Duration: ${minutes}:${seconds} · ${extension} · ${formatFileSize(file.size)}`
+			}
+
+			applyFilterPreview()
+			showToast('Video preview ready', 'info')
+		}
+
+		function validateVideoFile(file) {
+			if (!file || (file.type !== 'video/mp4' && !file.name.toLowerCase().endsWith('.mp4'))) {
+				showToast('Sirf MP4 video files allow hain.', 'error')
+				return false
+			}
+
+			if (file.size > 10 * 1024 * 1024) {
+				showToast('File 10MB se badi hai.', 'error')
+				return false
+			}
+
+			return true
+		}
+
+		function clearPreviewUrl() {
+			if (previewUrl) {
+				URL.revokeObjectURL(previewUrl)
+				previewUrl = ''
+			}
+		}
+
+		function clearSelectedFileInput() {
+			const fileInput = document.getElementById('videoFile')
+			if (fileInput) fileInput.value = ''
+		}
+
+		function removeFile() {
+			selectedFile = null
+			clearPreviewUrl()
+			clearSelectedFileInput()
+			document.getElementById('previewWrap').style.display = 'none'
+			document.getElementById('previewInfo').style.display = 'none'
+			document.getElementById('videoMeta').style.display = 'none'
+			document.getElementById('dropZone').classList.remove('has-file')
+			document.getElementById('phonePreview').style.display = 'none'
+			document.getElementById('phonePlaceholder').style.display = 'flex'
+			document.getElementById('videoPreview').removeAttribute('src')
+			document.getElementById('phonePreview').removeAttribute('src')
+			document.getElementById('uploadBtn').disabled = true
+		}
+
+		function onTagKey(event) {
+			if (event.key === 'Enter' || event.key === ',') {
+				event.preventDefault()
+				const value = event.target.value.trim().replace(/^#/, '')
+				if (value) addTag(value)
+				event.target.value = ''
+			}
+		}
+
+		function addTag(tag) {
+			tag = tag.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+			if (!tag || tags.includes(tag) || tags.length >= 10) return
+			tags.push(tag)
+			renderTags()
+		}
+
+		function removeTag(tag) {
+			const index = tags.indexOf(tag)
+			if (index > -1) tags.splice(index, 1)
+			renderTags()
+		}
+
+		function renderTags() {
+			document.getElementById('tagChips').innerHTML = tags.map(tag =>
+				`<span class="tag-chip">#${tag}<button class="tag-chip-rm" onclick="removeTag('${tag}')">x</button></span>`
+			).join('')
+			document.getElementById('tagsHidden').value = tags.join(',')
+		}
+
+		function selectPrivacy(element) {
+			document.querySelectorAll('.privacy-opt').forEach(option => option.classList.remove('selected'))
+			element.classList.add('selected')
+			const input = element.querySelector('input[type="radio"]')
+			if (input) input.checked = true
+		}
+
+		function toggleSchedule(checkboxEl) {
+			const input = document.getElementById('scheduledAtInput')
+			if (!input) return
+			const enabled = Boolean(checkboxEl?.checked)
+			input.disabled = !enabled
+			if (!enabled) input.value = ''
+		}
+
+		function updateChar(input, countId, max) {
+			const length = input.value.length
+			const counter = document.getElementById(countId)
+			counter.textContent = `${length} / ${max}`
+			counter.className = 'char-hint' + (length > max * 0.9 ? ' warn' : '') + (length >= max ? ' over' : '')
+		}
+
+		async function startCamera() {
+			if (cameraStream) return
+			if (!navigator.mediaDevices?.getUserMedia) {
+				showToast('Camera is browser me supported nahi hai.', 'error')
+				return
+			}
+
+			try {
+				cameraStream = await navigator.mediaDevices.getUserMedia({
+					video: {
+						facingMode: { ideal: 'environment' },
+						width: { ideal: 720 },
+						height: { ideal: 1280 }
+					},
+					audio: true
+				})
+
+				const source = document.getElementById('cameraSource')
+				source.srcObject = cameraStream
+				await source.play()
+
+				document.getElementById('cameraPlaceholder').style.display = 'none'
+				document.getElementById('cameraStatus').textContent = 'Camera ready'
+				document.getElementById('recordCameraBtn').disabled = false
+				document.getElementById('stopCameraBtn').disabled = false
+				document.getElementById('startCameraBtn').disabled = true
+
+				startCameraRender()
+				showToast('Camera ready', 'success')
+			} catch (error) {
+				showToast('Camera access nahi mili: ' + error.message, 'error')
+			}
+		}
+
+		function startCameraRender() {
+			cancelAnimationFrame(cameraFrame)
+
+			const source = document.getElementById('cameraSource')
+			const canvas = document.getElementById('cameraCanvas')
+			const context = canvas.getContext('2d')
+
+			const render = () => {
+				if (!cameraStream) return
+
+				if (source.readyState >= 2) {
+					if (canvas.width !== source.videoWidth || canvas.height !== source.videoHeight) {
+						canvas.width = source.videoWidth || 720
+						canvas.height = source.videoHeight || 1280
+					}
+
+					context.filter = getActiveFilter().css
+					context.drawImage(source, 0, 0, canvas.width, canvas.height)
+					context.filter = 'none'
+				}
+
+				cameraFrame = requestAnimationFrame(render)
+			}
+
+			render()
+		}
+
+		function paintCameraIdle() {
+			const canvas = document.getElementById('cameraCanvas')
+			const context = canvas.getContext('2d')
+			canvas.width = 540
+			canvas.height = 960
+			context.fillStyle = '#05050b'
+			context.fillRect(0, 0, canvas.width, canvas.height)
+		}
+
+		function stopCamera() {
+			if (mediaRecorder?.state === 'recording') {
+				mediaRecorder.stop()
+			}
+
+			if (cameraStream) {
+				cameraStream.getTracks().forEach(track => track.stop())
+				cameraStream = null
+			}
+
+			if (recordingStream) {
+				recordingStream.getTracks().forEach(track => track.stop())
+				recordingStream = null
+			}
+
+			cancelAnimationFrame(cameraFrame)
+			cameraFrame = null
+
+			const source = document.getElementById('cameraSource')
+			source.pause()
+			source.srcObject = null
+
+			document.getElementById('cameraPlaceholder').style.display = ''
+			document.getElementById('cameraStatus').textContent = 'Camera off'
+			document.getElementById('recordCameraBtn').disabled = true
+			document.getElementById('recordCameraBtn').textContent = 'Start Recording'
+			document.getElementById('recordCameraBtn').classList.remove('recording')
+			document.getElementById('stopCameraBtn').disabled = true
+			document.getElementById('startCameraBtn').disabled = false
+
+			paintCameraIdle()
+		}
+
+		function toggleRecording() {
+			if (!cameraStream) {
+				showToast('Pehle camera start karo.', 'error')
+				return
+			}
+
+			if (mediaRecorder?.state === 'recording') {
+				document.getElementById('recordCameraBtn').disabled = true
+				document.getElementById('recordCameraBtn').textContent = 'Processing...'
+				mediaRecorder.stop()
+				return
+			}
+
+			try {
+				const canvas = document.getElementById('cameraCanvas')
+				const canvasStream = canvas.captureStream(30)
+				recordingStream = new MediaStream([
+					...canvasStream.getVideoTracks(),
+					...cameraStream.getAudioTracks()
+				])
+
+				const mimeType = [
+					'video/webm;codecs=vp9,opus',
+					'video/webm;codecs=vp8,opus',
+					'video/webm'
+				].find(type => window.MediaRecorder?.isTypeSupported?.(type)) || ''
+
+				mediaRecorder = mimeType
+					? new MediaRecorder(recordingStream, { mimeType })
+					: new MediaRecorder(recordingStream)
+
+				recordedChunks = []
+				recordedFile = null
+				document.getElementById('useRecordingBtn').disabled = true
+
+				mediaRecorder.ondataavailable = event => {
+					if (event.data?.size) recordedChunks.push(event.data)
+				}
+
+				mediaRecorder.onstop = () => {
+					const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' })
+					recordedFile = new File([blob], `camera-recording-${Date.now()}.webm`, {
+						type: blob.type || 'video/webm'
+					})
+					document.getElementById('cameraStatus').textContent = 'Recording ready'
+					document.getElementById('recordCameraBtn').disabled = false
+					document.getElementById('recordCameraBtn').textContent = 'Start Recording'
+					document.getElementById('recordCameraBtn').classList.remove('recording')
+					document.getElementById('useRecordingBtn').disabled = false
+					if (recordingStream) {
+						recordingStream.getTracks().forEach(track => track.stop())
+						recordingStream = null
+					}
+					showToast('Recording ready. Use Recording dabao.', 'success')
+				}
+
+				mediaRecorder.start(250)
+				document.getElementById('cameraStatus').textContent = 'Recording live'
+				document.getElementById('recordCameraBtn').textContent = 'Stop Recording'
+				document.getElementById('recordCameraBtn').classList.add('recording')
+				showToast('Recording start ho gayi.', 'info')
+			} catch (error) {
+				showToast('Recording start nahi hui: ' + error.message, 'error')
+			}
+		}
+
+		function useRecordedVideo() {
+			if (!recordedFile) {
+				showToast('Abhi recording ready nahi hai.', 'error')
+				return
+			}
+
+			syncFileInput(recordedFile)
+			applyVideoFile(recordedFile)
+			showToast('Recording upload ke liye select ho gayi.', 'success')
+		}
+
+		function syncFileInput(file) {
+			const input = document.getElementById('videoFile')
+			if (!input || typeof DataTransfer === 'undefined') return
+
+			try {
+				const dataTransfer = new DataTransfer()
+				dataTransfer.items.add(file)
+				input.files = dataTransfer.files
+			} catch (_) {
+				/* Some browsers do not allow programmatic file assignment. */
+			}
+		}
+
+		async function startUpload() {
+			if (!selectedFile) {
+				showToast('Pehle video select karo.', 'error')
+				return
+			}
+
+			const caption = document.getElementById('captionInput').value.trim()
+			if (!caption) {
+				showToast('Caption likhna zaroori hai.', 'error')
+				return
+			}
+
+			const tagsValue = document.getElementById('tagsHidden').value
+			const privacy = document.querySelector('input[name="privacy"]:checked')?.value || 'public'
+			const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || ''
+			const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN'
+
+			const formData = new FormData()
+			formData.append('file', selectedFile)
+			formData.append('content', caption)
+			formData.append('tags', tagsValue)
+			formData.append('privacy', privacy)
+
+			// Scheduling (optional)
+			const scheduleEnabled = document.getElementById('scheduleEnabled')?.checked
+			const scheduledAt = document.getElementById('scheduledAtInput')?.value
+			if (scheduleEnabled && scheduledAt) {
+				formData.append('scheduledAt', scheduledAt)
+			}
+
+			document.getElementById('uploadBtn').style.display = 'none'
+			const progressSection = document.getElementById('progressSection')
+			progressSection.style.display = 'block'
+			setProgress(0)
+			setStep('upload')
+
+			try {
+				await new Promise((resolve, reject) => {
+					const xhr = new XMLHttpRequest()
+					xhr.open('POST', '/api/upload/video')
+					xhr.setRequestHeader(csrfHeader, csrfToken)
+
+					xhr.upload.onprogress = event => {
+						if (!event.lengthComputable) return
+						const percent = Math.round((event.loaded / event.total) * 100)
+						setProgress(percent)
+						if (percent >= 100) setStep('process')
+					}
+
+					xhr.onload = () => {
+						const payload = parseMaybeJson(xhr.responseText)
+						if (xhr.status >= 200 && xhr.status < 300 && payload?.success !== false) {
+							resolve(payload)
+							return
+						}
+						reject(new Error(payload?.message || `Upload failed: ${xhr.status}`))
+					}
+
+					xhr.onerror = () => reject(new Error('Network error'))
+					xhr.send(formData)
+				})
+
+				setProgress(100)
+				setStep('done')
+
+				setTimeout(() => {
+					progressSection.style.display = 'none'
+					document.querySelector('.upload-layout').style.display = 'none'
+					document.querySelector('.page-hdr').style.display = 'none'
+					document.getElementById('successScreen').style.display = 'block'
+					document.getElementById('uploadBtn').style.display = 'flex'
+				}, 700)
+			} catch (error) {
+				progressSection.style.display = 'none'
+				document.getElementById('uploadBtn').style.display = 'flex'
+				document.getElementById('uploadBtn').disabled = false
+				showToast('Upload fail hua: ' + error.message, 'error')
+			}
+		}
+
+		function setProgress(percent) {
+			document.getElementById('progressFill').style.width = percent + '%'
+			document.getElementById('progressPct').textContent = percent + '%'
+			document.getElementById('progressTitle').textContent = percent < 100 ? 'Uploading...' : 'Processing...'
+		}
+
+		function setStep(active) {
+			const steps = ['upload', 'process', 'done']
+			steps.forEach((step, index) => {
+				const element = document.getElementById('step-' + step)
+				element.className = 'progress-step'
+				const activeIndex = steps.indexOf(active)
+				if (index < activeIndex) element.classList.add('done')
+				else if (index === activeIndex) element.classList.add('active')
+			})
+		}
+
+		function resetAll() {
+			document.querySelector('.upload-layout').style.display = 'grid'
+			document.querySelector('.page-hdr').style.display = 'block'
+			document.getElementById('successScreen').style.display = 'none'
+			document.getElementById('uploadBtn').style.display = 'flex'
+			document.getElementById('uploadBtn').disabled = true
+			document.getElementById('captionInput').value = ''
+			const scheduleCb = document.getElementById('scheduleEnabled')
+			if (scheduleCb) {
+				scheduleCb.checked = false
+				toggleSchedule(scheduleCb)
+			}
+			document.getElementById('captionChar').textContent = '0 / 500'
+			document.getElementById('progressSection').style.display = 'none'
+			removeFile()
+			tags.length = 0
+			renderTags()
+		}
+
+		function formatFileSize(bytes) {
+			if (!Number.isFinite(bytes)) return '0 MB'
+			return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+		}
+
+		function parseMaybeJson(raw) {
+			try {
+				return raw ? JSON.parse(raw) : null
+			} catch {
+				return null
+			}
+		}
+
+		function showToast(message, type = 'info') {
+			document.getElementById('__upload-toast')?.remove()
+
+			const colors = {
+				info: '#312e81',
+				success: '#0f766e',
+				error: '#be123c'
+			}
+
+			const toast = document.createElement('div')
+			toast.id = '__upload-toast'
+			toast.textContent = message
+			toast.style.cssText = `
+				position: fixed;
+				bottom: 32px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: ${colors[type] || colors.info};
+				color: #fff;
+				padding: 12px 20px;
+				border-radius: 999px;
+				font-size: .82rem;
+				font-weight: 600;
+				z-index: 9999;
+				box-shadow: 0 12px 40px rgba(0,0,0,.28);
+			`
+			document.body.appendChild(toast)
+			setTimeout(() => toast.remove(), 3200)
+		}
+	</script>
+</body>
+
+</html>

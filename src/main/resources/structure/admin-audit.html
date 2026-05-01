@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Audit Log — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+
+	<!-- SIDEBAR -->
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='audit')}"></div>
+	<div class="main-content">
+
+		<div class="d-flex align-items-center justify-content-between mb-4">
+			<div>
+				<h4 class="mb-0">📋 Audit Log</h4>
+				<small class="text-muted">Saare admin actions ka complete record</small>
+			</div>
+			<button class="btn btn-outline-danger btn-sm" onclick="clearLog()">🗑 Clear Log</button>
+		</div>
+
+		<!-- STATS -->
+		<div class="row g-3 mb-4" id="statsRow">
+			<div class="col-md-2">
+				<div class="stat-box">
+					<h4 id="statTotal">—</h4><small>Total Actions</small>
+				</div>
+			</div>
+			<div class="col-md-2">
+				<div class="stat-box">
+					<h4 id="statDeletes" style="color:#dc2626">—</h4><small>Deletes</small>
+				</div>
+			</div>
+			<div class="col-md-2">
+				<div class="stat-box">
+					<h4 id="statBlocks" style="color:#be185d">—</h4><small>Blocks/Bans</small>
+				</div>
+			</div>
+			<div class="col-md-2">
+				<div class="stat-box">
+					<h4 id="statRoles" style="color:#3730a3">—</h4><small>Role Changes</small>
+				</div>
+			</div>
+			<div class="col-md-2">
+				<div class="stat-box">
+					<h4 id="statBroadcasts" style="color:#9d174d">—</h4><small>Broadcasts</small>
+				</div>
+			</div>
+			<div class="col-md-2">
+				<div class="stat-box">
+					<h4 id="statOther" style="color:#374151">—</h4><small>Other</small>
+				</div>
+			</div>
+		</div>
+
+		<!-- FILTER BAR -->
+		<div class="filter-bar d-flex gap-3 align-items-end flex-wrap">
+			<div>
+				<label class="form-label small fw-semibold mb-1">🔍 Search</label>
+				<input type="text" id="searchInput" class="form-control form-control-sm"
+					placeholder="Action, admin, detail..." style="width:220px" oninput="debounceSearch()">
+			</div>
+			<div>
+				<label class="form-label small fw-semibold mb-1">📂 Action Type</label>
+				<select id="filterAction" class="form-select form-select-sm" style="width:160px" onchange="loadLog()">
+					<option value="">All Actions</option>
+					<option value="USER_BLOCK">User Block</option>
+					<option value="USER_UNBLOCK">User Unblock</option>
+					<option value="USER_DELETE">User Delete</option>
+					<option value="USER_TEMPBAN">Temp Ban</option>
+					<option value="POST_DELETE">Post Delete</option>
+					<option value="POST_HIDE">Post Hide</option>
+					<option value="POST_UNHIDE">Post Unhide</option>
+					<option value="COMMENT_DELETE">Comment Delete</option>
+					<option value="REPORT_RESOLVE">Report Resolve</option>
+					<option value="ROLE_ASSIGN">Role Assign</option>
+					<option value="PUSH_BROADCAST">Push Broadcast</option>
+				</select>
+			</div>
+			<div>
+				<label class="form-label small fw-semibold mb-1">📄 Per Page</label>
+				<select id="pageSize" class="form-select form-select-sm" style="width:80px" onchange="loadLog()">
+					<option value="25">25</option>
+					<option value="50" selected>50</option>
+					<option value="100">100</option>
+				</select>
+			</div>
+			<button class="btn btn-outline-secondary btn-sm" onclick="exportAuditCSV()">⬇ Export CSV</button>
+		</div>
+
+		<!-- TABLE -->
+		<div class="card shadow-sm">
+			<table class="table table-hover mb-0" id="auditTable">
+				<thead class="table-dark">
+					<tr>
+						<th style="width:150px">⏰ Time</th>
+						<th style="width:140px">👤 Admin</th>
+						<th style="width:140px">⚡ Action</th>
+						<th>📝 Detail</th>
+					</tr>
+				</thead>
+				<tbody id="auditTableBody">
+					<tr>
+						<td colspan="4" class="text-center text-muted py-4">Loading...</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<!-- PAGINATION -->
+		<div class="d-flex justify-content-between align-items-center mt-3">
+			<small class="text-muted" id="pageInfo">—</small>
+			<div class="d-flex gap-1" id="pagination"></div>
+		</div>
+
+	</div>
+
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-audit.js}"></script>
+</body>
+
+</html>

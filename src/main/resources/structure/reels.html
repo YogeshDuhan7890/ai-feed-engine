@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Feed | AI Feed</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/reels.css}">
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="stories-bar" id="storiesBar">
+		<div id="storyRingsList">
+			<div class="story-ring add-story-ring" id="addStoryBtn" style="cursor:pointer;">
+				<div class="story-ring-avatar">
+					<div class="plus-icon">+</div>
+				</div>
+				<div class="story-ring-name">Add</div>
+			</div>
+		</div>
+	</div>
+  <input type="file" id="storyFileInput" accept="image/jpeg,image/png,video/mp4,.jpg,.png,.mp4" style="display:none;">
+
+	<div id="storyViewerBackdrop"></div>
+
+	<div id="storyViewer">
+		<div id="storyProgress" style="display:flex;gap:4px;padding:10px 12px 0;position:absolute;top:0;left:0;right:0;z-index:10;"></div>
+
+		<div class="story-user-row" style="position:absolute;top:24px;left:0;right:0;z-index:10;display:flex;align-items:center;padding:8px 12px;gap:8px;">
+			<img id="storyUserAvatar" src="" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;">
+			<div style="flex:1;">
+				<div id="storyUserName" style="color:#fff;font-weight:600;font-size:14px;"></div>
+				<div id="storyTime" style="color:rgba(255,255,255,0.7);font-size:12px;"></div>
+			</div>
+			<span id="storyViewCount" style="color:rgba(255,255,255,0.8);font-size:12px;"></span>
+			<button
+				id="storyDeleteBtn"
+				onclick="deleteCurrentStory()"
+				style="display:none;background:rgba(255,0,0,0.7);border:none;color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px;">Delete</button>
+			<button
+				id="storyViewerClose"
+				style="background:rgba(0,0,0,0.4);border:none;color:#fff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;">&times;</button>
+		</div>
+
+		<div id="storyMedia" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#000;">
+			<img id="storyImage" src="" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:none;">
+			<video id="storyVideo" style="max-width:100%;max-height:100%;display:none;" playsinline muted></video>
+			<div id="storyTextOverlay" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;">
+				<span class="story-text-content" style="font-size:1.8rem;font-weight:700;text-align:center;padding:24px;"></span>
+			</div>
+			<div id="storyCaption" style="position:absolute;bottom:80px;left:16px;right:16px;color:#fff;font-size:14px;text-shadow:0 1px 4px #000;"></div>
+		</div>
+
+		<button id="storyPrevBtn" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.3);border:none;color:#fff;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:20px;z-index:10;">&#8249;</button>
+		<button id="storyNextBtn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.3);border:none;color:#fff;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:20px;z-index:10;">&#8250;</button>
+	</div>
+
+	<div class="feed-layout">
+		<div class="feed-main">
+			<div class="language-bar">
+				<select id="languageSelect">
+					<option value="en">English</option>
+					<option value="hi">Hindi</option>
+				</select>
+			</div>
+
+			<div id="feed" class="reels-container"></div>
+		</div>
+
+		<div class="feed-sidebar">
+			<div id="suggestedUsers" class="sidebar-card"></div>
+
+			<div id="trendingCard" class="sidebar-card">
+				<h4 class="sidebar-card-title">Trending</h4>
+				<div id="trendingTags"></div>
+			</div>
+		</div>
+	</div>
+
+	<div class="panel-backdrop" id="backdrop"></div>
+	<div class="comments-panel" id="commentsPanel">
+		<div class="comments-header">
+			<span id="commentsPanelTitle">Comments</span>
+			<button class="close-comments-btn" id="closeCommentsBtn">&times;</button>
+		</div>
+		<div class="comments-list" id="commentsList"></div>
+		<div class="comments-input-row" style="position:relative">
+			<button id="emojiBtn" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:0 6px;flex-shrink:0;opacity:.7">+</button>
+			<span id="commentCharCount" style="font-size:.65rem;color:#6b7280;flex-shrink:0;margin-right:4px"></span>
+			<input id="commentInput" type="text" placeholder="Write a comment..." maxlength="300" onkeydown="if(event.key==='Enter')submitComment()" />
+			<button class="send-comment-btn" id="sendCommentBtn" onclick="submitComment()">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+					<line x1="22" y1="2" x2="11" y2="13" />
+					<polygon points="22 2 15 22 11 13 2 9 22 2" />
+				</svg>
+			</button>
+		</div>
+	</div>
+
+	<div id="offlineBanner">Internet unavailable. Reconnecting...</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+	<script th:src="@{/js/videobuffer.js}"></script>
+	<script th:src="@{/js/share.js}"></script>
+	<script th:src="@{/js/commentSystem.js}"></script>
+	<script th:src="@{/js/reels.js}"></script>
+	<script th:src="@{/js/stories.js}"></script>
+	<script th:src="@{/js/suggestedUsers.js}"></script>
+	<script th:src="@{/js/pushNotifications.js}"></script>
+
+	<script>
+		async function loadTrending() {
+			try {
+				const res = await fetch('/api/hashtags/trending?limit=8')
+				const tags = await res.json()
+				const el = document.getElementById('trendingTags')
+				if (!el || !tags?.length) return
+
+				el.innerHTML = ''
+				tags.forEach(tag => {
+					const a = document.createElement('a')
+					a.href = '/hashtag/' + (tag.tag || tag.name || tag)
+					a.className = 'trending-tag-link'
+
+					const name = document.createElement('span')
+					name.className = 'trending-tag-name'
+					name.textContent = '#' + (tag.tag || tag.name || tag)
+
+					const count = document.createElement('span')
+					count.className = 'trending-tag-count'
+					count.textContent = tag.count ? tag.count + ' posts' : ''
+
+					a.append(name, count)
+					el.appendChild(a)
+				})
+			} catch (e) {
+				/* no-op */
+			}
+		}
+
+		loadTrending()
+	</script>
+</body>
+
+</html>

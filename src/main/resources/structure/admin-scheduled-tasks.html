@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Scheduled Tasks — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='scheduled-tasks')}"></div>
+	<div class="main-content">
+
+		<div class="d-flex justify-content-between mb-3">
+			<h4>⏰ Scheduled Tasks</h4>
+			<button class="btn btn-primary btn-sm" onclick="openCreate()">+ Add Task</button>
+		</div>
+
+		<div class="card p-3">
+			<table class="table table-hover align-middle">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Cron</th>
+						<th>Status</th>
+						<th>Last Run</th>
+						<th>Next Run</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody id="taskTable"></tbody>
+			</table>
+		</div>
+
+	</div>
+
+	<script th:src="@{/js/admin-scheduled-tasks.js}"></script>
+</body>
+
+</html>

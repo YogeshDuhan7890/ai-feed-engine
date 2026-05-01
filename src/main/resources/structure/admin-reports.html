@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Reports — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+
+	<!-- SIDEBAR -->
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='reports')}"></div>
+	<div class="main-content">
+
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<div class="card shadow p-3 mb-3">
+				<h6 class="mb-2">📊 Reports Overview</h6>
+
+				<div style="height:200px;">
+					<canvas id="reportsChart"></canvas>
+				</div>
+			</div>
+			<h4 class="mb-0">🚨 Report System</h4>
+			<div class="d-flex gap-2">
+				<button class="btn btn-sm btn-outline-danger active-tab" onclick="loadReports('pending', this)">
+					Pending <span class="badge bg-danger ms-1" id="pendingCount">0</span>
+				</button>
+				<button class="btn btn-sm btn-outline-success" onclick="loadReports('resolved', this)">
+					Resolved
+				</button>
+			</div>
+		</div>
+
+		<div id="reportsLoading" class="text-center py-5 text-muted">Loading reports...</div>
+
+		<div id="reportsEmpty" style="display:none;" class="text-center py-5 text-muted">
+			<div style="font-size:48px">✅</div>
+			<p>Koi pending report nahi!</p>
+		</div>
+
+		<div id="reportsContainer"></div>
+
+	</div>
+
+	<div id="adminToast"></div>
+
+	<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+	<script th:src="@{/js/admin-reports.js}"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		document.addEventListener("DOMContentLoaded", () => {
+			loadReports('pending')
+		})
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,191 @@
+/* =============================================
+   PROFILE.CSS — REDESIGNED
+   Modern card-based layout
+============================================= */
+
+/* Video grid thumbnails */
+.video-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 3px;
+	margin-top: 4px;
+}
+
+.video-thumb {
+	aspect-ratio: 9/16;
+	position: relative;
+	overflow: hidden;
+	cursor: pointer;
+	background: #0d0d1a;
+	border-radius: 6px;
+}
+
+.video-thumb video,
+.video-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.video-thumb:hover video,
+.video-thumb:hover img {
+	transform: scale(1.06);
+}
+
+.video-thumb-overlay {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 55%);
+	opacity: 0;
+	transition: opacity 0.25s;
+	display: flex;
+	align-items: flex-end;
+	padding: 10px;
+}
+
+.video-thumb:hover .video-thumb-overlay {
+	opacity: 1;
+}
+
+.video-thumb-views {
+	font-size: 0.75rem;
+	color: #fff;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* Delete button on video */
+.video-thumb .delete-btn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	background: rgba(244, 63, 94, 0.85);
+	backdrop-filter: blur(4px);
+	border: none;
+	color: #fff;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	cursor: pointer;
+	font-size: 0.75rem;
+	opacity: 0;
+	transition: opacity 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.video-thumb:hover .delete-btn {
+	opacity: 1;
+}
+
+/* Empty state */
+.empty-state {
+	grid-column: 1 / -1;
+	text-align: center;
+	padding: 60px 20px;
+	color: #374151;
+}
+
+.empty-state .empty-icon {
+	font-size: 3rem;
+	margin-bottom: 12px;
+}
+
+.empty-state p {
+	font-size: 0.88rem;
+}
+
+/* Other user profile page */
+.other-profile-actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.follow-btn-large {
+	padding: 10px 28px;
+	background: linear-gradient(135deg, #6366f1, #8b5cf6);
+	color: #fff;
+	border: none;
+	border-radius: 24px;
+	font-size: 0.88rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: all 0.2s;
+	box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.follow-btn-large:hover {
+	opacity: 0.88;
+	transform: translateY(-1px);
+}
+
+.follow-btn-large.following {
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	box-shadow: none;
+	color: #d1d5db;
+}
+
+.msg-btn-large {
+	padding: 10px 20px;
+	background: rgba(255, 255, 255, 0.07);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	color: #f1f1f8;
+	border-radius: 24px;
+	font-size: 0.88rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.msg-btn-large:hover {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+/* Blocked user card */
+.blocked-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.blocked-av {
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+	object-fit: cover;
+	background: #1a1a2e;
+	flex-shrink: 0;
+}
+
+.unblock-btn {
+	margin-left: auto;
+	padding: 6px 14px;
+	background: rgba(244, 63, 94, 0.12);
+	border: 1px solid rgba(244, 63, 94, 0.3);
+	color: #f43f5e;
+	border-radius: 20px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.unblock-btn:hover {
+	background: rgba(244, 63, 94, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+	.video-grid {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 2px;
+	}
+}

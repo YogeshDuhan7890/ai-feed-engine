@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<title>Video Player | AI Feed</title>
+	<meta charset="UTF-8">
+
+	<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+	<style>
+		body {
+			background: #000;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			min-height: 100vh;
+			margin: 0;
+			color: white;
+			font-family: Arial, sans-serif;
+		}
+
+		h2 {
+			margin-bottom: 20px;
+		}
+
+		video {
+			border-radius: 10px;
+			max-width: 100%;
+		}
+
+		.error {
+			color: #ff4444;
+			margin-top: 20px;
+		}
+	</style>
+
+</head>
+
+<body>
+
+	<h2>AI Feed Video Player</h2>
+
+	<video id="video" width="800" controls></video>
+
+	<p class="error" id="errorMsg" style="display:none;">
+		Video load nahi ho saki. Path check karo.
+	</p>
+
+	<script>
+
+		const video = document.getElementById('video');
+
+		// FIX: path URL query param se lo — hardcoded date nahi
+		// Example usage: /player?path=uploads/hls/2026-03-10/index.m3u8
+		const params = new URLSearchParams(window.location.search);
+		const hlsPath = params.get("path");
+
+		if (!hlsPath) {
+			document.getElementById("errorMsg").style.display = "block";
+			document.getElementById("errorMsg").innerText = "Path parameter missing. URL mein ?path=... lagao.";
+		} else {
+			const videoSrc = "/stream/hls?path=" + encodeURIComponent(hlsPath);
+
+			if (Hls.isSupported()) {
+				const hls = new Hls();
+				hls.loadSource(videoSrc);
+				hls.attachMedia(video);
+				hls.on(Hls.Events.ERROR, function (event, data) {
+					if (data.fatal) {
+						document.getElementById("errorMsg").style.display = "block";
+					}
+				});
+			} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+				video.src = videoSrc;
+			} else {
+				document.getElementById("errorMsg").style.display = "block";
+				document.getElementById("errorMsg").innerText = "HLS is not supported in this browser.";
+			}
+		}
+
+	</script>
+
+</body>
+
+</html>

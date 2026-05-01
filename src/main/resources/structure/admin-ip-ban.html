@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>IP Ban System — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='ip-ban')}"></div>
+	<div class="main-content">
+
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<div>
+				<h4 class="mb-0">🌐 IP Ban System</h4>
+			</div>
+			<span class="badge bg-danger fs-6" id="banCount">0 Banned IPs</span>
+		</div>
+		<div class="row g-4">
+			<div class="col-md-4">
+				<div class="card shadow-sm p-4">
+					<h6 class="mb-3">🚫 Ban New IP</h6>
+					<div class="mb-2"><label class="form-label small fw-semibold">IP Address</label>
+						<input type="text" id="newIP" class="form-control" placeholder="192.168.1.1">
+					</div>
+					<div class="mb-3"><label class="form-label small fw-semibold">Reason</label>
+						<input type="text" id="banReason" class="form-control" placeholder="Spam, abuse...">
+					</div>
+					<button class="btn btn-danger w-100" onclick="banIP()">🚫 Ban IP</button>
+				</div>
+			</div>
+			<div class="col-md-8">
+				<div class="card shadow-sm p-4">
+					<div class="d-flex justify-content-between mb-3">
+						<h6 class="mb-0">📋 Banned IPs</h6>
+						<input type="text" id="ipSearch" class="form-control form-control-sm" placeholder="Search..."
+							style="width:180px" oninput="filterIPs(this.value)">
+					</div>
+					<div id="ipList">
+						<div class="text-muted small text-center py-3">Loading...</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-ip-ban.js}"></script>
+
+	<!-- Dark Mode Toggle -->
+	<button id="darkModeToggle" onclick="toggleDark()" title="Toggle Dark Mode">🌙</button>
+	<script>
+		function toggleDark() {
+			document.body.classList.toggle('dark-mode');
+			const isDark = document.body.classList.contains('dark-mode');
+			localStorage.setItem('adminDarkMode', isDark);
+			document.getElementById('darkModeToggle').textContent = isDark ? '☀️' : '🌙';
+		}
+		// Apply saved preference
+		if (localStorage.getItem('adminDarkMode') === 'true') {
+			document.body.classList.add('dark-mode');
+			const btn = document.getElementById('darkModeToggle');
+			if (btn) btn.textContent = '☀️';
+		}
+	</script>
+</body>
+
+</html>

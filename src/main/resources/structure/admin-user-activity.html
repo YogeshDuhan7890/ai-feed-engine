@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>User Activity Timeline - AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+	<style>
+		.user-picker-item {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 12px;
+			border: 1px solid var(--border);
+			border-radius: 14px;
+			margin-bottom: 10px;
+			cursor: pointer;
+			transition: border-color .18s ease, background .18s ease, transform .18s ease;
+		}
+
+		.user-picker-item:hover,
+		.user-picker-item.active {
+			background: var(--primary-dim);
+			border-color: rgba(99, 102, 241, .28);
+			transform: translateY(-1px);
+		}
+
+		.activity-hero {
+			display: grid;
+			grid-template-columns: auto 1fr;
+			gap: 16px;
+			align-items: center;
+		}
+
+		.activity-avatar {
+			width: 64px;
+			height: 64px;
+			border-radius: 50%;
+			object-fit: cover;
+			background: var(--bg3);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-weight: 700;
+			font-size: 1.1rem;
+			color: var(--text);
+			border: 1px solid var(--border);
+		}
+
+		.activity-stat-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+			gap: 12px;
+			margin-top: 18px;
+		}
+
+		.activity-stat {
+			padding: 14px;
+			border: 1px solid var(--border);
+			border-radius: 14px;
+			background: var(--bg3);
+		}
+
+		.activity-stat-label {
+			display: block;
+			font-size: .72rem;
+			text-transform: uppercase;
+			letter-spacing: .5px;
+			color: var(--text-muted);
+			margin-bottom: 6px;
+		}
+
+		.activity-stat-value {
+			font-size: 1.2rem;
+			font-weight: 800;
+			color: var(--heading);
+		}
+
+		.timeline-list {
+			position: relative;
+			margin-top: 6px;
+		}
+
+		.timeline-item {
+			position: relative;
+			padding: 0 0 18px 28px;
+		}
+
+		.timeline-item::before {
+			content: '';
+			position: absolute;
+			left: 9px;
+			top: 14px;
+			bottom: -6px;
+			width: 2px;
+			background: var(--border2);
+		}
+
+		.timeline-item:last-child::before {
+			display: none;
+		}
+
+		.timeline-dot {
+			position: absolute;
+			left: 0;
+			top: 2px;
+			width: 20px;
+			height: 20px;
+			border-radius: 50%;
+			background: var(--primary);
+			box-shadow: 0 0 0 4px var(--primary-dim);
+		}
+
+		.timeline-title {
+			font-weight: 700;
+			color: var(--heading);
+			margin-bottom: 2px;
+		}
+
+		.timeline-meta {
+			font-size: .75rem;
+			color: var(--text-muted);
+			margin-bottom: 6px;
+		}
+
+		.timeline-body {
+			color: var(--text);
+			font-size: .9rem;
+			line-height: 1.5;
+		}
+
+		.activity-empty {
+			padding: 42px 24px;
+			text-align: center;
+			color: var(--text-muted);
+		}
+
+		@media (max-width: 767px) {
+			.activity-hero {
+				grid-template-columns: 1fr;
+				text-align: center;
+			}
+
+			.activity-avatar {
+				margin: 0 auto;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='user-activity')}"></div>
+
+	<div class="main-content">
+		<div class="admin-topbar">
+			<div>
+				<h4 class="admin-page-title mb-1">User Activity Timeline</h4>
+				<div class="admin-page-sub">Select a user to inspect recent posts, warnings, role changes, and account status.</div>
+			</div>
+		</div>
+
+		<div class="row g-4">
+			<div class="col-lg-4">
+				<div class="card shadow-sm p-3">
+					<h6 class="mb-3">Select User</h6>
+					<input
+						type="text"
+						id="userSearch"
+						class="form-control form-control-sm mb-3"
+						placeholder="Search by name or email..."
+						oninput="filterUsers(this.value)">
+					<div id="userList" style="max-height: 70vh; overflow-y: auto;">
+						<div class="text-muted small text-center py-4" id="userListMsg">Loading users...</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-lg-8">
+				<div id="activityPanel">
+					<div class="card shadow-sm activity-empty">
+						<h6 class="mb-2">No user selected</h6>
+						<div>Pick a user from the left panel to view their timeline.</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-user-activity.js}"></script>
+</body>
+
+</html>

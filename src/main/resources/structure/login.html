@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login | AI Feed</title>
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			background:
+				radial-gradient(circle at top left, rgba(79, 70, 229, .22), transparent 34%),
+				radial-gradient(circle at bottom right, rgba(124, 58, 237, .16), transparent 30%),
+				#070711;
+			font-family: 'Segoe UI', sans-serif;
+			color: #f8fafc;
+		}
+		.auth-shell {
+			width: 100%;
+			max-width: 960px;
+			display: grid;
+			grid-template-columns: 1.1fr .9fr;
+			border: 1px solid rgba(255, 255, 255, .08);
+			border-radius: 24px;
+			overflow: hidden;
+			background: rgba(10, 10, 20, .92);
+			box-shadow: 0 24px 80px rgba(0, 0, 0, .45);
+		}
+		.brand {
+			padding: 48px;
+			background: linear-gradient(155deg, rgba(99, 102, 241, .96), rgba(55, 48, 163, .94));
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+		.eyebrow {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			width: fit-content;
+			padding: 8px 14px;
+			border-radius: 999px;
+			background: rgba(255, 255, 255, .12);
+			font-size: .78rem;
+			font-weight: 700;
+			letter-spacing: .5px;
+			text-transform: uppercase;
+		}
+		.brand h1 {
+			margin: 18px 0 12px;
+			font-size: 2.3rem;
+			line-height: 1.1;
+			font-weight: 900;
+		}
+		.brand p {
+			margin: 0;
+			max-width: 420px;
+			line-height: 1.7;
+			color: rgba(255, 255, 255, .84);
+			font-size: .96rem;
+		}
+		.brand-list {
+			margin: 28px 0 0;
+			padding: 0;
+			list-style: none;
+			display: grid;
+			gap: 12px;
+		}
+		.brand-list li {
+			padding: 12px 14px;
+			border-radius: 14px;
+			background: rgba(255, 255, 255, .08);
+			font-size: .9rem;
+		}
+		.panel {
+			padding: 42px 36px;
+			background: rgba(10, 10, 18, .94);
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+		.panel h2 {
+			margin: 0 0 6px;
+			font-size: 1.55rem;
+			font-weight: 800;
+		}
+		.subtitle {
+			margin: 0 0 24px;
+			color: #94a3b8;
+			font-size: .9rem;
+		}
+		.alert {
+			margin-bottom: 14px;
+			padding: 11px 14px;
+			border-radius: 12px;
+			font-size: .85rem;
+			border: 1px solid transparent;
+		}
+		.alert-error {
+			background: rgba(239, 68, 68, .12);
+			border-color: #ef4444;
+			color: #fca5a5;
+		}
+		.alert-success {
+			background: rgba(34, 197, 94, .12);
+			border-color: #22c55e;
+			color: #86efac;
+		}
+		.google-btn {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			width: 100%;
+			padding: 12px 14px;
+			border-radius: 14px;
+			background: #fff;
+			color: #111827;
+			font-weight: 700;
+			text-decoration: none;
+			margin-bottom: 16px;
+		}
+		.google-btn:hover { opacity: .92; }
+		.google-icon { width: 18px; height: 18px; }
+		.divider {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin: 0 0 18px;
+			color: #475569;
+			font-size: .78rem;
+		}
+		.divider::before,
+		.divider::after {
+			content: '';
+			flex: 1;
+			height: 1px;
+			background: rgba(255, 255, 255, .08);
+		}
+		.form-group { margin-bottom: 16px; }
+		.form-group label {
+			display: block;
+			margin-bottom: 6px;
+			color: #cbd5e1;
+			font-size: .76rem;
+			font-weight: 700;
+			letter-spacing: .5px;
+			text-transform: uppercase;
+		}
+		.form-group input {
+			width: 100%;
+			padding: 13px 14px;
+			border-radius: 14px;
+			border: 1px solid rgba(255, 255, 255, .08);
+			background: #111827;
+			color: #f8fafc;
+			font-size: .92rem;
+			outline: none;
+		}
+		.form-group input:focus { border-color: #6366f1; }
+		.meta-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin: 2px 0 16px;
+			gap: 12px;
+		}
+		.hint {
+			color: #64748b;
+			font-size: .8rem;
+		}
+		.link {
+			color: #a5b4fc;
+			text-decoration: none;
+			font-size: .82rem;
+			font-weight: 600;
+		}
+		.link:hover { text-decoration: underline; }
+		.submit-btn {
+			width: 100%;
+			padding: 13px 16px;
+			border: none;
+			border-radius: 14px;
+			background: linear-gradient(135deg, #6366f1, #7c3aed);
+			color: #fff;
+			font-size: .95rem;
+			font-weight: 800;
+			cursor: pointer;
+		}
+		.submit-btn:hover { opacity: .92; }
+		.register-row {
+			margin-top: 18px;
+			text-align: center;
+			color: #94a3b8;
+			font-size: .84rem;
+		}
+		@media (max-width: 760px) {
+			.auth-shell { grid-template-columns: 1fr; }
+			.brand { display: none; }
+			.panel { padding: 30px 22px; }
+		}
+	</style>
+</head>
+<body>
+	<div class="auth-shell">
+		<section class="brand">
+			<div class="eyebrow">AI Feed Access</div>
+			<h1>Login karo aur apni feed wapas kholo.</h1>
+			<p>Email, password aur agar 2FA enabled hai to email OTP ke saath account secure tareeke se open hoga.</p>
+			<ul class="brand-list">
+				<li>Personalized feed aur suggestions</li>
+				<li>Real-time messages aur notifications</li>
+				<li>Role-based redirect after login</li>
+			</ul>
+		</section>
+
+		<section class="panel">
+			<h2>Welcome back</h2>
+			<p class="subtitle">Apne account se login karo. 2FA on hone par agle step me OTP verify karna padega.</p>
+
+			<div class="alert alert-error" th:if="${param.error}">
+				Login fail ho gaya. Email/username ya password check karo, phir dobara try karo.
+			</div>
+			<div class="alert alert-error" th:if="${param.disabled}">
+				Yeh account abhi active nahi hai. Agar purana account hai to verify/recovery flow try karo.
+			</div>
+			<div class="alert alert-error" th:if="${param.googleOnly}">
+				Yeh account Google se bana tha. Is account ke liye Google button use karo.
+			</div>
+			<div class="alert alert-error" th:if="${param.googleDisabled}">
+				Google login abhi configured nahi hai. `GOOGLE_CLIENT_ID` aur `GOOGLE_CLIENT_SECRET` set karne ke baad hi yeh option chalega.
+			</div>
+			<div class="alert alert-success" th:if="${param.logout}">
+				Aap logout ho gaye ho.
+			</div>
+			<div class="alert alert-success" th:if="${param.registered}">
+				Account ban gaya. Ab login karo.
+			</div>
+			<div class="alert alert-success" th:if="${param.verified}">
+				Email verify ho gaya. Ab login karo.
+			</div>
+
+			<a href="/auth/google" class="google-btn" th:if="${googleLoginEnabled}">
+				<svg class="google-icon" viewBox="0 0 48 48" aria-hidden="true">
+					<path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 2.9L37.1 9.7C33.7 6.7 29.1 5 24 5 12.9 5 4 13.9 4 25s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z" />
+					<path fill="#FF3D00" d="M6.3 14.7l7 5.1C15 16.1 19.2 13 24 13c3.1 0 5.8 1.1 7.9 2.9L37.1 9.7C33.7 6.7 29.1 5 24 5c-7.7 0-14.3 4.4-17.7 9.7z" />
+					<path fill="#4CAF50" d="M24 45c5.1 0 9.8-1.7 13.4-4.6l-6.2-5.2C29.3 36.7 26.8 37.5 24 37.5c-5.2 0-9.6-3.3-11.3-8H6.1l-.1.1C9.3 40.5 16.1 45 24 45z" />
+					<path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.2 5.2C41 35.5 44 30.7 44 25c0-1.7-.1-3.4-.4-5z" />
+				</svg>
+				Google se continue karo
+			</a>
+			<div class="hint" th:if="${googleLoginEnabled}" style="margin:-6px 0 16px; text-align:center;">
+				Google account chooser open hoga, isliye aap dusri Gmail ID bhi select kar sakte ho.
+			</div>
+
+			<div class="divider">ya email / username login use karo</div>
+
+			<form th:action="@{/login}" method="post">
+				<div class="form-group">
+					<label>Email ya Username</label>
+					<input type="text" name="username" placeholder="aapka@email.com ya username" required autofocus>
+				</div>
+
+				<div class="form-group">
+					<label>Password</label>
+					<input type="password" name="password" placeholder="Password daalo" required>
+				</div>
+
+				<div class="meta-row">
+					<span class="hint">2FA enabled accounts ko OTP verify karna padega.</span>
+					<a href="/forgot-password" class="link">Forgot password?</a>
+				</div>
+
+				<button type="submit" class="submit-btn">Login</button>
+			</form>
+
+			<div class="register-row">
+				Account nahi hai? <a href="/register" class="link">Register karo</a>
+			</div>
+		</section>
+	</div>
+</body>
+</html>

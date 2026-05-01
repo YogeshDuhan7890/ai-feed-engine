@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title th:text="${tag != null ? '#' + tag + ' | AI Feed' : 'Explore Hashtags | AI Feed'}">Explore Hashtags | AI Feed
+	</title>
+	<meta th:name="_csrf" th:content="${_csrf.token}" />
+	<meta th:name="_csrf_header" th:content="${_csrf.headerName}" />
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		html,
+		body {
+			background: #07070f;
+			color: #f1f1f8;
+			font-family: 'Segoe UI', sans-serif;
+			margin: 0
+		}
+
+		.hashtag-page {
+			max-width: 800px;
+			margin: 0 auto;
+			padding: 80px 16px 100px
+		}
+
+		/* ── Search bar ── */
+		.ht-search-wrap {
+			position: relative;
+			margin-bottom: 28px
+		}
+
+		.ht-search-inner {
+			display: flex;
+			align-items: center;
+			background: #0d0d1a;
+			border: 2px solid rgba(255, 255, 255, .08);
+			border-radius: 16px;
+			transition: border-color .2s, box-shadow .2s;
+			overflow: hidden;
+		}
+
+		.ht-search-inner:focus-within {
+			border-color: #6366f1;
+			box-shadow: 0 0 0 4px rgba(99, 102, 241, .12);
+		}
+
+		.ht-search-icon {
+			padding: 0 14px 0 16px;
+			color: #6b7280;
+			display: flex;
+			align-items: center;
+			font-size: 1.1rem
+		}
+
+		#hashtagInput {
+			flex: 1;
+			background: transparent;
+			border: none;
+			color: #f1f1f8;
+			font-size: .95rem;
+			padding: 14px 0;
+			outline: none;
+			font-family: inherit;
+		}
+
+		#hashtagInput::placeholder {
+			color: rgba(255, 255, 255, .2)
+		}
+
+		.ht-search-btn {
+			background: linear-gradient(135deg, #6366f1, #8b5cf6);
+			border: none;
+			color: #fff;
+			padding: 10px 18px;
+			margin: 5px;
+			border-radius: 12px;
+			cursor: pointer;
+			font-size: .85rem;
+			font-weight: 700;
+			font-family: inherit;
+			transition: opacity .2s;
+			white-space: nowrap;
+		}
+
+		.ht-search-btn:hover {
+			opacity: .88
+		}
+
+		/* Autocomplete */
+		#autocompleteList {
+			position: absolute;
+			top: calc(100% + 6px);
+			left: 0;
+			right: 0;
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 14px;
+			z-index: 100;
+			overflow: hidden;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+			display: none;
+		}
+
+		.ac-item {
+			padding: 11px 16px;
+			cursor: pointer;
+			font-size: .88rem;
+			color: #d1d5db;
+			border-bottom: 1px solid rgba(255, 255, 255, .04);
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			transition: background .15s;
+		}
+
+		.ac-item:last-child {
+			border-bottom: none
+		}
+
+		.ac-item:hover {
+			background: rgba(255, 255, 255, .05)
+		}
+
+		.ac-tag {
+			color: #818cf8;
+			font-weight: 600
+		}
+
+		/* ── Section title ── */
+		.section-title {
+			font-size: .72rem;
+			font-weight: 700;
+			color: #4b5563;
+			text-transform: uppercase;
+			letter-spacing: .6px;
+			margin-bottom: 14px;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		/* ── Trending grid ── */
+		.trending-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+			gap: 10px;
+			margin-bottom: 32px;
+		}
+
+		.trending-card {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 16px;
+			padding: 16px;
+			cursor: pointer;
+			transition: all .2s;
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.trending-card:hover {
+			border-color: rgba(99, 102, 241, .3);
+			background: rgba(99, 102, 241, .06);
+			transform: translateY(-2px);
+		}
+
+		.trending-rank {
+			font-size: .65rem;
+			font-weight: 700;
+			color: #4b5563;
+			text-transform: uppercase;
+			letter-spacing: .5px;
+		}
+
+		.trending-tag {
+			font-size: 1rem;
+			font-weight: 800;
+			color: #f1f1f8;
+		}
+
+		.trending-count {
+			font-size: .75rem;
+			color: #6b7280;
+		}
+
+		.trending-bar {
+			height: 3px;
+			background: rgba(255, 255, 255, .06);
+			border-radius: 2px;
+			margin-top: 2px;
+		}
+
+		.trending-bar-fill {
+			height: 100%;
+			border-radius: 2px;
+			background: linear-gradient(90deg, #6366f1, #8b5cf6);
+		}
+
+		/* ── Hashtag header (shown after search) ── */
+		.ht-result-header {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .07);
+			border-radius: 18px;
+			padding: 20px;
+			margin-bottom: 20px;
+			display: flex;
+			align-items: center;
+			gap: 16px;
+		}
+
+		.ht-icon {
+			width: 56px;
+			height: 56px;
+			border-radius: 16px;
+			background: linear-gradient(135deg, rgba(99, 102, 241, .2), rgba(139, 92, 246, .15));
+			border: 1px solid rgba(99, 102, 241, .3);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.4rem;
+			font-weight: 800;
+			color: #818cf8;
+			flex-shrink: 0;
+		}
+
+		.ht-result-name {
+			font-size: 1.3rem;
+			font-weight: 800;
+			color: #f1f1f8;
+			margin-bottom: 3px
+		}
+
+		.ht-result-count {
+			font-size: .82rem;
+			color: #6b7280
+		}
+
+		/* ── Video grid ── */
+		.video-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 3px;
+		}
+
+		.ht-video-card {
+			aspect-ratio: 9/16;
+			background: #0d0d1a;
+			border-radius: 8px;
+			overflow: hidden;
+			position: relative;
+			cursor: pointer;
+		}
+
+		.ht-video-card video {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+		}
+
+		.ht-video-overlay {
+			position: absolute;
+			inset: 0;
+			background: rgba(0, 0, 0, 0);
+			transition: background .2s;
+			display: flex;
+			align-items: flex-end;
+			padding: 8px;
+		}
+
+		.ht-video-card:hover .ht-video-overlay {
+			background: rgba(0, 0, 0, .4)
+		}
+
+		.ht-video-meta {
+			display: none;
+			flex-direction: column;
+			gap: 2px;
+			width: 100%;
+		}
+
+		.ht-video-card:hover .ht-video-meta {
+			display: flex
+		}
+
+		.ht-video-caption {
+			font-size: .72rem;
+			color: #fff;
+			font-weight: 600;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.ht-video-user {
+			font-size: .65rem;
+			color: rgba(255, 255, 255, .7)
+		}
+
+		/* ── Skeleton ── */
+		.sk-trending-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+			gap: 10px;
+		}
+
+		.sk-trending-card {
+			background: #0d0d1a;
+			border-radius: 16px;
+			padding: 16px;
+			animation: skPulse 1.4s infinite;
+		}
+
+		.sk-line {
+			height: 9px;
+			border-radius: 4px;
+			background: #111122;
+			margin-bottom: 8px
+		}
+
+		.sk-line.w60 {
+			width: 60%
+		}
+
+		.sk-line.w40 {
+			width: 40%
+		}
+
+		@keyframes skPulse {
+
+			0%,
+			100% {
+				opacity: .3
+			}
+
+			50% {
+				opacity: .7
+			}
+		}
+
+		.sk-video-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 3px
+		}
+
+		.sk-video {
+			aspect-ratio: 9/16;
+			background: #0d0d1a;
+			border-radius: 8px;
+			animation: skPulse 1.4s infinite
+		}
+
+		/* ── Empty ── */
+		.ht-empty {
+			text-align: center;
+			padding: 60px 20px;
+			color: #4b5563;
+			grid-column: 1/-1
+		}
+
+		.ht-empty .icon {
+			font-size: 3rem;
+			opacity: .4;
+			margin-bottom: 12px
+		}
+
+		/* ── Related tags ── */
+		.related-chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-bottom: 24px
+		}
+
+		.related-chip {
+			background: rgba(255, 255, 255, .05);
+			border: 1px solid rgba(255, 255, 255, .1);
+			color: #9ca3af;
+			padding: 5px 14px;
+			border-radius: 20px;
+			font-size: .78rem;
+			cursor: pointer;
+			transition: all .15s;
+		}
+
+		.related-chip:hover {
+			background: rgba(99, 102, 241, .1);
+			border-color: rgba(99, 102, 241, .3);
+			color: #a5b4fc
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="hashtag-page">
+
+		<!-- Search -->
+		<div class="ht-search-wrap">
+			<div class="ht-search-inner">
+				<div class="ht-search-icon">#</div>
+				<input type="text" id="hashtagInput" placeholder="Hashtag search karo..." autocomplete="off"
+					th:value="${tag != null ? tag : ''}">
+				<button class="ht-search-btn" onclick="doSearch()">Search</button>
+			</div>
+			<div id="autocompleteList"></div>
+		</div>
+
+		<!-- Main content area -->
+		<div id="mainContent">
+			<!-- Trending (default) or Results (after search) -->
+		</div>
+
+	</div>
+
+	<script>
+		var debTimer = null;
+		var currentTag = null;
+
+		// Init
+		document.addEventListener('DOMContentLoaded', function () {
+			var input = document.getElementById('hashtagInput');
+
+			// Pre-fill from URL path /hashtag/:tag
+			var pathMatch = location.pathname.match(/\/hashtag\/(.+)/);
+			var urlTag = pathMatch ? pathMatch[1] : null;
+			var initialTag = (urlTag && urlTag !== 'trending') ? urlTag : (input.value.trim() || null);
+
+			if (initialTag) {
+				input.value = initialTag;
+				doSearch();
+			} else {
+				loadTrending();
+			}
+
+			// Input events
+			input.addEventListener('input', function () {
+				var q = input.value.trim();
+				clearTimeout(debTimer);
+				if (!q) {hideAutocomplete(); return;}
+				debTimer = setTimeout(function () {loadAutocomplete(q);}, 200);
+			});
+
+			input.addEventListener('keydown', function (e) {
+				if (e.key === 'Enter') {hideAutocomplete(); doSearch();}
+				if (e.key === 'Escape') {hideAutocomplete();}
+			});
+
+			document.addEventListener('click', function (e) {
+				if (!e.target.closest('.ht-search-wrap')) hideAutocomplete();
+			});
+		});
+
+		/* ── Load trending ── */
+		async function loadTrending() {
+			var main = document.getElementById('mainContent');
+			main.innerHTML = [
+				'<div class="section-title">',
+				'  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+				'  Trending Hashtags',
+				'</div>',
+				'<div class="sk-trending-grid" id="trendingGrid">',
+				Array(8).fill('<div class="sk-trending-card"><div class="sk-line"></div><div class="sk-line w60"></div><div class="sk-line w40"></div></div>').join(''),
+				'</div>'
+			].join('');
+
+			try {
+				var res = await fetch('/api/hashtags/trending');
+				var data = await res.json();
+				var grid = document.getElementById('trendingGrid');
+				if (!grid) return;
+				grid.className = 'trending-grid';
+				grid.innerHTML = '';
+
+				var maxCount = data.length > 0 ? Math.max.apply(null, data.map(function (h) {return h.count || 0;})) : 1;
+
+				data.forEach(function (h, i) {
+					var card = document.createElement('div');
+					card.className = 'trending-card';
+					var pct = maxCount > 0 ? Math.round((h.count / maxCount) * 100) : 5;
+					card.innerHTML = [
+						'<div class="trending-rank">#' + (i + 1) + ' Trending</div>',
+						'<div class="trending-tag">#' + esc(h.tag) + '</div>',
+						'<div class="trending-count">' + fmtCount(h.count) + ' videos</div>',
+						'<div class="trending-bar"><div class="trending-bar-fill" style="width:' + pct + '%"></div></div>'
+					].join('');
+					card.addEventListener('click', function () {
+						document.getElementById('hashtagInput').value = h.tag;
+						doSearch();
+					});
+					grid.appendChild(card);
+				});
+
+				if (!data.length) {
+					grid.innerHTML = '<div class="ht-empty"><div class="icon">🏷️</div><div>Koi trending hashtag nahi abhi</div></div>';
+				}
+			} catch (e) {
+				document.getElementById('trendingGrid').innerHTML =
+					'<div style="color:#f87171;padding:20px">Load nahi hua.</div>';
+			}
+		}
+
+		/* ── Search by tag ── */
+		async function doSearch() {
+			var tag = document.getElementById('hashtagInput').value.trim().replace(/^#/, '');
+			if (!tag) {loadTrending(); return;}
+
+			currentTag = tag;
+			history.replaceState(null, '', '/hashtag/' + encodeURIComponent(tag));
+			document.title = '#' + tag + ' | AI Feed';
+
+			var main = document.getElementById('mainContent');
+			main.innerHTML = [
+				'<div style="background:#0d0d1a;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:16px">',
+				'  <div class="ht-icon">#</div>',
+				'  <div>',
+				'    <div class="ht-result-name">#' + esc(tag) + '</div>',
+				'    <div class="ht-result-count" id="resultCount">Loading...</div>',
+				'  </div>',
+				'</div>',
+				'<div class="section-title" id="relatedSection" style="display:none">',
+				'  🔗 Related Tags',
+				'</div>',
+				'<div class="related-chips" id="relatedChips" style="display:none"></div>',
+				'<div class="section-title">',
+				'  🎬 Videos',
+				'</div>',
+				'<div class="sk-video-grid" id="videoGrid">',
+				Array(6).fill('<div class="sk-video"></div>').join(''),
+				'</div>'
+			].join('');
+
+			try {
+				var res = await fetch('/api/hashtags/search?tag=' + encodeURIComponent(tag));
+				var data = await res.json();
+
+				// Update count
+				var countEl = document.getElementById('resultCount');
+				if (countEl) countEl.textContent = fmtCount(data.count || 0) + ' videos';
+
+				// Render videos
+				var grid = document.getElementById('videoGrid');
+				if (!grid) return;
+				grid.className = 'video-grid';
+				grid.innerHTML = '';
+
+				var posts = data.posts || [];
+				if (!posts.length) {
+					grid.innerHTML = '<div class="ht-empty"><div class="icon">🎬</div><div>Is hashtag pe koi video nahi</div></div>';
+				} else {
+					posts.forEach(function (p) {grid.appendChild(buildVideoCard(p));});
+				}
+
+				// Load related tags
+				loadRelated(tag);
+
+			} catch (e) {
+				document.getElementById('videoGrid').innerHTML =
+					'<div style="color:#f87171;padding:20px;text-align:center">Load nahi hua.</div>';
+			}
+		}
+
+		/* ── Build video card ── */
+		function buildVideoCard(p) {
+			var card = document.createElement('div');
+			card.className = 'ht-video-card';
+
+			var vid = document.createElement('video');
+			vid.muted = true; vid.preload = 'metadata'; vid.playsInline = true;
+			var src = document.createElement('source');
+			src.src = p.videoUrl || ''; src.type = 'video/mp4';
+			vid.appendChild(src);
+			vid.addEventListener('loadedmetadata', function () {vid.currentTime = 1;});
+			vid.addEventListener('mouseenter', function () {vid.play().catch(function () { });});
+			vid.addEventListener('mouseleave', function () {vid.pause(); vid.currentTime = 1;});
+			vid.addEventListener('error', function () {
+				vid.style.display = 'none';
+				var fb = document.createElement('div');
+				fb.style.cssText = 'width:100%;height:100%;background:#1a1a2e;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#374151;';
+				fb.textContent = '🎬';
+				card.insertBefore(fb, vid);
+			});
+
+			var overlay = document.createElement('div');
+			overlay.className = 'ht-video-overlay';
+
+			var meta = document.createElement('div');
+			meta.className = 'ht-video-meta';
+			var caption = document.createElement('div');
+			caption.className = 'ht-video-caption';
+			caption.textContent = p.content || '';
+			var user = document.createElement('div');
+			user.className = 'ht-video-user';
+			user.textContent = p.userName || '';
+			meta.append(caption, user);
+			overlay.appendChild(meta);
+
+			card.append(vid, overlay);
+			card.addEventListener('click', function () {
+				location.href = '/feed?post=' + p.postId;
+			});
+			return card;
+		}
+
+		/* ── Load related tags ── */
+		async function loadRelated(tag) {
+			try {
+				var res = await fetch('/api/hashtags/autocomplete?q=' + encodeURIComponent(tag.substring(0, 3)));
+				var data = await res.json();
+				var related = data.filter(function (t) {return t.replace('#', '') !== tag;}).slice(0, 6);
+				if (!related.length) return;
+
+				var sec = document.getElementById('relatedSection');
+				var chips = document.getElementById('relatedChips');
+				if (!sec || !chips) return;
+				sec.style.display = 'flex';
+				chips.style.display = 'flex';
+				chips.innerHTML = '';
+				related.forEach(function (t) {
+					var chip = document.createElement('span');
+					chip.className = 'related-chip';
+					chip.textContent = t;
+					chip.addEventListener('click', function () {
+						document.getElementById('hashtagInput').value = t.replace('#', '');
+						doSearch();
+					});
+					chips.appendChild(chip);
+				});
+			} catch (e) { }
+		}
+
+		/* ── Autocomplete ── */
+		async function loadAutocomplete(q) {
+			try {
+				var res = await fetch('/api/hashtags/autocomplete?q=' + encodeURIComponent(q));
+				var data = await res.json();
+				var list = document.getElementById('autocompleteList');
+				if (!data.length) {hideAutocomplete(); return;}
+				list.innerHTML = '';
+				list.style.display = 'block';
+				data.slice(0, 8).forEach(function (tag) {
+					var item = document.createElement('div');
+					item.className = 'ac-item';
+					item.innerHTML = '<span style="color:#6b7280;font-size:.85rem">#</span><span class="ac-tag">' + esc(tag.replace('#', '')) + '</span>';
+					item.addEventListener('click', function () {
+						document.getElementById('hashtagInput').value = tag.replace('#', '');
+						hideAutocomplete();
+						doSearch();
+					});
+					list.appendChild(item);
+				});
+			} catch (e) {hideAutocomplete();}
+		}
+
+		function hideAutocomplete() {
+			var list = document.getElementById('autocompleteList');
+			if (list) list.style.display = 'none';
+		}
+
+		/* ── Utils ── */
+		function fmtCount(n) {
+			if (!n) return '0';
+			if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+			if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+			return String(n);
+		}
+
+		function esc(s) {
+			return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		}
+	</script>
+</body>
+
+</html>

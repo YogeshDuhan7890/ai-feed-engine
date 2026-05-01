@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Profile | AI Feed</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/main.css}">
+	<style>
+		*,
+		*::before,
+		*::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			background: #0a0a0f;
+			color: #f1f1f8;
+			font-family: 'Segoe UI', sans-serif;
+			min-height: 100vh;
+		}
+
+		.profile-page {
+			max-width: 800px;
+			margin: 0 auto;
+			padding: 70px 16px 100px;
+		}
+
+		/* ── Avatar + Info Row ── */
+		.profile-header {
+			display: flex;
+			align-items: flex-start;
+			gap: 28px;
+			padding: 28px 0 24px;
+			border-bottom: 1px solid rgba(255, 255, 255, .08);
+			margin-bottom: 24px;
+		}
+
+		/* Avatar */
+		.profile-avatar-wrap {
+			position: relative;
+			flex-shrink: 0;
+		}
+
+		#avatar {
+			width: 100px;
+			height: 100px;
+			border-radius: 50%;
+			object-fit: cover;
+			border: 3px solid rgba(99, 102, 241, .5);
+			display: block;
+			background: #1a1a2e;
+		}
+
+		.avatar-edit-btn {
+			position: absolute;
+			bottom: 2px;
+			right: 2px;
+			width: 28px;
+			height: 28px;
+			border-radius: 50%;
+			background: #6366f1;
+			border: 2px solid #0a0a0f;
+			color: #fff;
+			font-size: 12px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* Info */
+		.profile-info {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.profile-name {
+			font-size: 1.3rem;
+			font-weight: 800;
+			color: #f1f1f8;
+			margin-bottom: 2px;
+		}
+
+		.profile-email {
+			font-size: .8rem;
+			color: #6b7280;
+			margin-bottom: 8px;
+		}
+
+		.profile-bio {
+			font-size: .88rem;
+			color: #9ca3af;
+			line-height: 1.5;
+			margin-bottom: 6px;
+		}
+
+		.profile-interests {
+			font-size: .78rem;
+			color: #818cf8;
+			margin-bottom: 14px;
+		}
+
+		/* Stats */
+		.profile-stats {
+			display: flex;
+			gap: 24px;
+			margin-bottom: 16px;
+		}
+
+		.stat-item {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			cursor: pointer;
+			padding: 4px 10px;
+			border-radius: 10px;
+			transition: background .15s;
+		}
+
+		.stat-item:hover {
+			background: rgba(255, 255, 255, .05);
+		}
+
+		.stat-num {
+			font-size: 1.2rem;
+			font-weight: 800;
+			color: #f1f1f8;
+			line-height: 1.2;
+		}
+
+		.stat-label {
+			font-size: .7rem;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: .4px;
+		}
+
+		/* Edit btn */
+		.edit-btn {
+			background: rgba(255, 255, 255, .08);
+			border: 1px solid rgba(255, 255, 255, .15);
+			color: #f1f1f8;
+			padding: 8px 20px;
+			border-radius: 20px;
+			cursor: pointer;
+			font-size: .85rem;
+			font-weight: 600;
+			font-family: inherit;
+			transition: all .2s;
+		}
+
+		.edit-btn:hover {
+			background: rgba(255, 255, 255, .12);
+		}
+
+		.profile-actions {
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		/* ── Tabs ── */
+		.profile-tabs {
+			display: flex;
+			border-bottom: 1px solid rgba(255, 255, 255, .08);
+			margin-bottom: 16px;
+		}
+
+		.profile-tab-btn {
+			background: none;
+			border: none;
+			border-bottom: 2px solid transparent;
+			color: #6b7280;
+			padding: 10px 20px;
+			cursor: pointer;
+			font-size: .85rem;
+			font-weight: 600;
+			font-family: inherit;
+			transition: all .15s;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.profile-tab-btn:hover {
+			color: #d1d5db;
+		}
+
+		.profile-tab-btn.active {
+			color: #f1f1f8;
+			border-bottom-color: #6366f1;
+		}
+
+		/* ── Video Grid ── */
+		.video-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 3px;
+		}
+
+		.video-item {
+			position: relative;
+			aspect-ratio: 9/16;
+			background: #111;
+			cursor: pointer;
+			overflow: hidden;
+			border-radius: 4px;
+		}
+
+		.video-item video {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+			transition: opacity .2s;
+		}
+
+		.video-item:hover video {
+			opacity: .75;
+		}
+
+		.video-item-caption {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			padding: 6px 8px;
+			background: linear-gradient(transparent, rgba(0, 0, 0, .7));
+			font-size: .7rem;
+			color: #fff;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			opacity: 0;
+			transition: opacity .2s;
+		}
+
+		.video-item:hover .video-item-caption {
+			opacity: 1;
+		}
+
+		.video-item-actions {
+			position: absolute;
+			top: 6px;
+			right: 6px;
+			display: flex;
+			gap: 4px;
+			opacity: 0;
+			transition: opacity .2s;
+		}
+
+		.video-item:hover .video-item-actions {
+			opacity: 1;
+		}
+
+		.vi-action-btn {
+			background: rgba(0, 0, 0, .65);
+			border: none;
+			color: #fff;
+			width: 26px;
+			height: 26px;
+			border-radius: 50%;
+			cursor: pointer;
+			font-size: .7rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* Skeleton */
+		.skeleton-video {
+			aspect-ratio: 9/16;
+			background: #111;
+			border-radius: 4px;
+			animation: skPulse 1.4s infinite;
+		}
+
+		@keyframes skPulse {
+
+			0%,
+			100% {
+				opacity: .3
+			}
+
+			50% {
+				opacity: .6
+			}
+		}
+
+		/* Empty */
+		.profile-empty {
+			text-align: center;
+			padding: 60px 20px;
+			color: #374151;
+			grid-column: 1/-1;
+		}
+
+		.profile-empty .icon {
+			font-size: 3rem;
+			margin-bottom: 12px;
+			opacity: .4;
+		}
+
+		/* ── Edit Modal ── */
+		.modal-overlay {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, .75);
+			backdrop-filter: blur(4px);
+			z-index: 500;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.modal-overlay.open {
+			display: flex;
+		}
+
+		.modal-box {
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 18px;
+			width: min(400px, 95vw);
+			overflow: hidden;
+		}
+
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 16px 20px;
+			border-bottom: 1px solid rgba(255, 255, 255, .07);
+			font-weight: 700;
+		}
+
+		.modal-close {
+			background: none;
+			border: none;
+			color: #6b7280;
+			font-size: 1.1rem;
+			cursor: pointer;
+		}
+
+		.modal-body {
+			padding: 20px;
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+		}
+
+		.modal-field label {
+			display: block;
+			font-size: .72rem;
+			font-weight: 700;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: .4px;
+			margin-bottom: 5px;
+		}
+
+		.modal-field input,
+		.modal-field textarea {
+			width: 100%;
+			background: rgba(255, 255, 255, .06);
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 10px;
+			padding: 10px 14px;
+			color: #f1f1f8;
+			font-size: .88rem;
+			font-family: inherit;
+			outline: none;
+			transition: border-color .2s;
+		}
+
+		.modal-field input:focus,
+		.modal-field textarea:focus {
+			border-color: #6366f1;
+		}
+
+		.modal-field textarea {
+			resize: vertical;
+			min-height: 80px;
+		}
+
+		.modal-footer {
+			display: flex;
+			gap: 10px;
+			padding: 14px 20px;
+			border-top: 1px solid rgba(255, 255, 255, .07);
+		}
+
+		.save-btn {
+			flex: 1;
+			padding: 11px;
+			background: linear-gradient(135deg, #6366f1, #8b5cf6);
+			color: #fff;
+			border: none;
+			border-radius: 12px;
+			cursor: pointer;
+			font-weight: 700;
+			font-family: inherit;
+		}
+
+		.cancel-btn {
+			flex: 1;
+			padding: 11px;
+			background: rgba(255, 255, 255, .06);
+			color: #9ca3af;
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 12px;
+			cursor: pointer;
+			font-family: inherit;
+		}
+
+		/* ── Follow Modal ── */
+		#followModalBackdrop {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, .7);
+			z-index: 600;
+		}
+
+		#followModalBackdrop.open {
+			display: block;
+		}
+
+		#followModal {
+			display: none;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: min(420px, 94vw);
+			max-height: 70vh;
+			background: #0d0d1a;
+			border: 1px solid rgba(255, 255, 255, .1);
+			border-radius: 16px;
+			z-index: 601;
+			flex-direction: column;
+			overflow: hidden;
+		}
+
+		#followModal.open {
+			display: flex;
+		}
+
+		.follow-modal-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 14px 18px;
+			border-bottom: 1px solid rgba(255, 255, 255, .07);
+			font-weight: 700;
+		}
+
+		.follow-modal-close {
+			background: none;
+			border: none;
+			color: #6b7280;
+			font-size: 1.1rem;
+			cursor: pointer;
+		}
+
+		#followModalList {
+			overflow-y: auto;
+			flex: 1;
+		}
+
+		.follow-row {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 12px 18px;
+			cursor: pointer;
+			border-bottom: 1px solid rgba(255, 255, 255, .05);
+			transition: background .15s;
+		}
+
+		.follow-row:hover {
+			background: rgba(255, 255, 255, .04);
+		}
+
+		.follow-avatar {
+			width: 38px;
+			height: 38px;
+			border-radius: 50%;
+			object-fit: cover;
+			background: #1a1a2e;
+		}
+
+		.follow-name {
+			font-weight: 600;
+			font-size: .88rem;
+		}
+
+		/* Responsive */
+		@media(max-width:540px) {
+			.profile-header {
+				flex-direction: column;
+				align-items: center;
+				text-align: center;
+			}
+
+			.profile-stats {
+				justify-content: center;
+			}
+
+			.video-grid {
+				grid-template-columns: repeat(2, 1fr);
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<div th:replace="~{components/header :: header}"></div>
+
+	<div class="profile-page">
+
+		<!-- Header -->
+		<div class="profile-header">
+
+			<!-- Avatar -->
+			<div class="profile-avatar-wrap">
+				<img id="avatar" src="/images/default-avatar.png" alt="Avatar"
+					onerror="this.src='/images/default-avatar.png'">
+				<button class="avatar-edit-btn" id="changeAvatarBtn" title="Photo change karo">✏️</button>
+            <input type="file" id="avatarUpload" hidden accept="image/jpeg,image/png,.jpg,.png">
+			</div>
+
+			<!-- Info -->
+			<div class="profile-info">
+				<div class="profile-name" id="name">Loading...</div>
+				<div class="profile-email" id="email"></div>
+				<div class="profile-bio" id="bio"></div>
+				<div class="profile-interests" id="interests"></div>
+
+				<div class="profile-stats">
+					<div class="stat-item" id="followersBtn">
+						<span class="stat-num" id="followers">0</span>
+						<span class="stat-label">Followers</span>
+					</div>
+					<div class="stat-item" id="followingBtn">
+						<span class="stat-num" id="following">0</span>
+						<span class="stat-label">Following</span>
+					</div>
+					<div class="stat-item">
+						<span class="stat-num" id="videos">0</span>
+						<span class="stat-label">Videos</span>
+					</div>
+				</div>
+
+				<div class="profile-actions">
+					<button class="edit-btn" id="editProfileBtn">Edit Profile</button>
+					<a class="edit-btn" th:href="@{/account/settings}" style="text-decoration:none;">Account Settings</a>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- Tabs -->
+		<div class="profile-tabs">
+			<button class="profile-tab-btn active" data-tab="videos">🎬 My Videos</button>
+			<button class="profile-tab-btn" data-tab="saved">🔖 Saved</button>
+			<button class="profile-tab-btn" data-tab="blocked">🚫 Blocked</button>
+		</div>
+
+		<!-- Content -->
+		<div class="video-grid" id="videoGrid">
+			<!-- Skeleton -->
+			<div class="skeleton-video"></div>
+			<div class="skeleton-video"></div>
+			<div class="skeleton-video"></div>
+		</div>
+
+	</div>
+
+	<!-- Edit Modal -->
+	<div id="editModal" class="modal-overlay">
+		<div class="modal-box">
+			<div class="modal-header">
+				<span>Edit Profile</span>
+				<button class="modal-close" id="closeEditBtn">✕</button>
+			</div>
+			<div class="modal-body">
+				<div class="modal-field">
+					<label>Name</label>
+					<input id="editName" type="text" placeholder="Apna naam">
+				</div>
+				<div class="modal-field">
+					<label>Bio</label>
+					<textarea id="editBio" placeholder="Apne baare mein likho" maxlength="150"></textarea>
+				</div>
+				<div class="modal-field">
+					<label>Interests (comma separated)</label>
+					<input id="editInterests" type="text" placeholder="music, travel, food">
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button class="cancel-btn" id="cancelEditBtn">Cancel</button>
+				<button class="save-btn" id="saveProfileBtn">Save Karo</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Follow Modal -->
+	<div id="followModalBackdrop"></div>
+	<div id="followModal">
+		<div class="follow-modal-header">
+			<span id="followModalTitle">Followers</span>
+			<button class="follow-modal-close" id="followModalClose">✕</button>
+		</div>
+		<div id="followModalList"></div>
+	</div>
+
+	<script th:src="@{/js/profile.js}"></script>
+
+</body>
+
+</html>

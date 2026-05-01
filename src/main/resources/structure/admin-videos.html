@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Video Management — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+	<style>
+		/* ── Page-specific styles ── */
+		.filter-wrap {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 14px;
+			padding: 16px 20px;
+			margin-bottom: 16px;
+			display: flex;
+			flex-wrap: wrap;
+			gap: 14px;
+			align-items: flex-end;
+		}
+
+		.filter-group {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		.filter-group label {
+			font-size: 10px;
+			font-weight: 700;
+			color: var(--text-muted);
+			text-transform: uppercase;
+			letter-spacing: .6px;
+		}
+
+		.filter-group input,
+		.filter-group select {
+			background: var(--bg3);
+			border: 1px solid var(--border2);
+			border-radius: 9px;
+			color: var(--text);
+			padding: 7px 12px;
+			font-size: 13px;
+			outline: none;
+			transition: border-color .2s;
+		}
+
+		.filter-group input:focus,
+		.filter-group select:focus {
+			border-color: var(--primary);
+			box-shadow: 0 0 0 2px rgba(99, 102, 241, .2);
+		}
+
+		.filter-group input::placeholder {
+			color: var(--text-dim);
+		}
+
+		/* Bulk bar */
+		.bulk-bar {
+			background: linear-gradient(90deg, #4f46e5, #7c3aed);
+			border-radius: 12px;
+			padding: 10px 18px;
+			display: none;
+			margin-bottom: 14px;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+		}
+
+		.bulk-bar.show {
+			display: flex;
+		}
+
+		.bulk-bar span {
+			color: #fff;
+			font-size: 13px;
+			font-weight: 600;
+		}
+
+		/* Toast */
+		.toast-box {
+			position: fixed;
+			bottom: 24px;
+			right: 24px;
+			z-index: 9999;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.toast-item {
+			background: var(--card);
+			border: 1px solid var(--border2);
+			border-radius: 10px;
+			padding: 10px 18px;
+			font-size: 13px;
+			color: var(--text);
+			box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+			animation: slideIn .3s ease;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.toast-item.success {
+			border-left: 3px solid var(--green);
+		}
+
+		.toast-item.error {
+			border-left: 3px solid var(--red);
+		}
+
+		.toast-item.info {
+			border-left: 3px solid var(--blue);
+		}
+
+		@keyframes slideIn {
+			from {
+				transform: translateX(40px);
+				opacity: 0;
+			}
+
+			to {
+				transform: translateX(0);
+				opacity: 1;
+			}
+		}
+
+		/* Tag chips */
+		.tag-chip {
+			background: rgba(99, 102, 241, .18);
+			color: #a5b4fc;
+			border-radius: 20px;
+			padding: 2px 9px;
+			font-size: 11px;
+			font-weight: 600;
+			cursor: pointer;
+			border: 1px solid rgba(99, 102, 241, .25);
+			transition: background .15s;
+		}
+
+		.tag-chip:hover {
+			background: rgba(99, 102, 241, .35);
+		}
+
+		/* Grid view card */
+		.video-grid-card {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			overflow: hidden;
+			transition: transform .2s, border-color .2s, box-shadow .2s;
+			cursor: pointer;
+			position: relative;
+		}
+
+		.video-grid-card:hover {
+			transform: translateY(-3px);
+			border-color: var(--border2);
+			box-shadow: 0 8px 28px rgba(0, 0, 0, .4);
+		}
+
+		.video-grid-card.selected {
+			border-color: var(--primary);
+		}
+
+		.grid-thumb {
+			width: 100%;
+			height: 130px;
+			object-fit: cover;
+			background: #0a0a1a;
+			display: block;
+		}
+
+		.grid-thumb-placeholder {
+			width: 100%;
+			height: 130px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #0a0a1a;
+			color: var(--text-dim);
+			font-size: 2rem;
+		}
+
+		.grid-card-body {
+			padding: 10px 12px;
+		}
+
+		.grid-card-body .user-name {
+			font-size: 12px;
+			font-weight: 600;
+			color: var(--text);
+		}
+
+		.grid-card-body .meta {
+			font-size: 11px;
+			color: var(--text-muted);
+			margin-top: 2px;
+		}
+
+		.grid-badge {
+			position: absolute;
+			top: 7px;
+			right: 7px;
+			font-size: 10px;
+			padding: 2px 7px;
+			border-radius: 6px;
+		}
+
+		.grid-select {
+			position: absolute;
+			top: 7px;
+			left: 7px;
+			width: 18px;
+			height: 18px;
+		}
+
+		.grid-actions {
+			display: flex;
+			gap: 6px;
+			padding: 0 12px 10px;
+		}
+
+		.grid-actions button {
+			flex: 1;
+			padding: 5px 0;
+			border-radius: 7px;
+			font-size: 11px;
+			font-weight: 600;
+			cursor: pointer;
+			border: none;
+			transition: opacity .2s;
+		}
+
+		.grid-actions button:hover {
+			opacity: .8;
+		}
+
+		/* Modal */
+		.modal-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, .7);
+			z-index: 1000;
+			display: none;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.modal-overlay.show {
+			display: flex;
+		}
+
+		.modal-box {
+			background: var(--card);
+			border: 1px solid var(--border2);
+			border-radius: 16px;
+			padding: 28px 32px;
+			width: 520px;
+			max-width: 95vw;
+			max-height: 90vh;
+			overflow-y: auto;
+		}
+
+		.modal-box h5 {
+			color: #fff;
+			font-weight: 700;
+			margin-bottom: 16px;
+		}
+
+		.modal-video {
+			width: 100%;
+			border-radius: 10px;
+			max-height: 280px;
+			object-fit: contain;
+			background: #000;
+		}
+
+		/* Table dark overrides */
+		.table {
+			color: var(--text) !important;
+		}
+
+		.table thead th {
+			background: var(--bg3) !important;
+			color: var(--text-muted) !important;
+			border-color: var(--border) !important;
+			font-size: 11px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .5px;
+		}
+
+		.table tbody tr {
+			border-color: var(--border) !important;
+		}
+
+		.table tbody tr:hover {
+			background: rgba(255, 255, 255, .03) !important;
+		}
+
+		.table tbody td {
+			vertical-align: middle;
+			border-color: var(--border) !important;
+		}
+
+		.card.shadow {
+			background: var(--card) !important;
+			border: 1px solid var(--border) !important;
+		}
+
+		/* Stats row */
+		.stat-pill {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			padding: 10px 18px;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.stat-pill .s-val {
+			font-size: 1.4rem;
+			font-weight: 800;
+			color: #fff;
+		}
+
+		.stat-pill .s-lbl {
+			font-size: 11px;
+			color: var(--text-muted);
+		}
+
+		/* Empty state */
+		.empty-state {
+			text-align: center;
+			padding: 60px 20px;
+			color: var(--text-muted);
+		}
+
+		.empty-state .emoji {
+			font-size: 3rem;
+			margin-bottom: 12px;
+		}
+
+		/* Loading spinner */
+		.spinner {
+			display: inline-block;
+			width: 18px;
+			height: 18px;
+			border: 2px solid rgba(255, 255, 255, .2);
+			border-top-color: var(--primary);
+			border-radius: 50%;
+			animation: spin .7s linear infinite;
+		}
+
+		@keyframes spin {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<!-- SIDEBAR -->
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='videos')}"></div>
+	<div class="main-content">
+
+		<!-- PAGE HEADER -->
+		<div class="d-flex align-items-center justify-content-between mb-4">
+			<div>
+				<h4 class="mb-0" style="color:#fff;font-weight:800">🎬 Video Management</h4>
+				<small class="text-muted">Saare uploaded videos manage karo</small>
+			</div>
+			<div class="d-flex align-items-center gap-3">
+				<div id="loadingSpinner" style="display:none"><span class="spinner"></span></div>
+				<span class="stat-pill">
+					<span class="s-val" id="totalCount">—</span>
+					<span class="s-lbl">Total Videos</span>
+				</span>
+				<span class="stat-pill">
+					<span class="s-val" id="hiddenCount" style="color:var(--red)">—</span>
+					<span class="s-lbl">Hidden</span>
+				</span>
+			</div>
+		</div>
+
+		<!-- FILTER BAR -->
+		<div class="filter-wrap">
+			<!-- Search -->
+			<div class="filter-group" style="flex:2;min-width:180px">
+				<label>🔍 Search</label>
+				<input type="text" id="searchInput" placeholder="Title, content, user..." oninput="debounceFilter()">
+			</div>
+			<!-- Tag filter -->
+			<div class="filter-group" style="min-width:140px">
+				<label>🏷 Tag</label>
+				<input type="text" id="tagInput" placeholder="e.g. funny" oninput="debounceFilter()">
+			</div>
+			<!-- User filter -->
+			<div class="filter-group" style="min-width:140px">
+				<label>👤 User</label>
+				<input type="text" id="userInput" placeholder="Username..." oninput="debounceFilter()">
+			</div>
+			<!-- Status filter -->
+			<div class="filter-group" style="min-width:120px">
+				<label>📋 Status</label>
+				<select id="statusFilter" onchange="applyFilters()">
+					<option value="all">All</option>
+					<option value="visible">Visible only</option>
+					<option value="scheduled">Scheduled only</option>
+					<option value="hidden">Hidden only</option>
+				</select>
+			</div>
+			<!-- Sort -->
+			<div class="filter-group" style="min-width:130px">
+				<label>↕ Sort</label>
+				<select id="sortSelect" onchange="applyFilters()">
+					<option value="newest">Newest First</option>
+					<option value="oldest">Oldest First</option>
+					<option value="likes">Most Likes</option>
+					<option value="comments">Most Comments</option>
+				</select>
+			</div>
+			<!-- View toggle -->
+			<div class="filter-group">
+				<label>📐 View</label>
+				<div class="d-flex gap-1">
+					<button id="btnList" class="btn btn-sm active" onclick="setView('list')"
+						style="background:var(--primary);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">☰
+						List</button>
+					<button id="btnGrid" class="btn btn-sm" onclick="setView('grid')"
+						style="background:var(--bg3);border:1px solid var(--border2);color:var(--text-muted);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">⊞
+						Grid</button>
+				</div>
+			</div>
+			<!-- Refresh -->
+			<div class="filter-group">
+				<label>&nbsp;</label>
+				<button onclick="loadVideos()"
+					style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#93c5fd;border-radius:9px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600">🔄
+					Refresh</button>
+			</div>
+		</div>
+
+		<!-- BULK ACTION BAR -->
+		<div class="bulk-bar" id="bulkBar">
+			<span><strong id="selectedCount">0</strong> videos selected</span>
+			<div class="d-flex gap-2">
+				<button class="btn btn-sm" onclick="bulkAction('hide')"
+					style="background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.4);color:#fde68a;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600">🙈
+					Hide</button>
+				<button class="btn btn-sm" onclick="bulkAction('unhide')"
+					style="background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4);color:#6ee7b7;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600">👁
+					Unhide</button>
+				<button class="btn btn-sm" onclick="bulkAction('delete')"
+					style="background:rgba(244,63,94,.2);border:1px solid rgba(244,63,94,.4);color:#fca5a5;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600">🗑
+					Delete</button>
+				<button onclick="clearSelection()"
+					style="background:transparent;border:1px solid var(--border2);color:var(--text-muted);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer">✕
+					Clear</button>
+			</div>
+		</div>
+
+		<!-- SELECT ALL ROW -->
+		<div class="d-flex align-items-center gap-2 mb-3" id="selectAllRow">
+			<input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)"
+				style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary)">
+			<label for="selectAll" style="font-size:12px;color:var(--text-muted);margin:0;cursor:pointer">Select All on
+				Page</label>
+			<span id="resultCount" style="font-size:11px;color:var(--text-dim);margin-left:auto"></span>
+		</div>
+
+		<!-- LIST VIEW -->
+		<div id="viewList">
+			<div class="card shadow" style="border-radius:12px;overflow:hidden">
+				<table class="table table-hover mb-0" id="videoTable">
+					<thead>
+						<tr>
+							<th style="width:36px"><input type="checkbox" id="selectAllTable"
+									onchange="toggleSelectAll(this.checked)" style="accent-color:var(--primary)"></th>
+							<th style="width:50px">ID</th>
+							<th style="width:110px">Preview</th>
+							<th>Content</th>
+							<th style="width:120px">User</th>
+							<th style="width:180px">Tags</th>
+							<th style="width:90px">Likes</th>
+							<th style="width:80px">Comments</th>
+							<th style="width:80px">Status</th>
+							<th style="width:120px">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="videoTableBody">
+						<tr>
+							<td colspan="10" class="text-center py-5" style="color:var(--text-muted)"><span
+									class="spinner"></span></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- GRID VIEW -->
+		<div id="viewGrid" style="display:none">
+			<div class="row g-3" id="videoGridContainer"></div>
+		</div>
+
+		<!-- EMPTY STATE -->
+		<div id="emptyState" class="empty-state" style="display:none">
+			<div class="emoji">🎬</div>
+			<h5 style="color:var(--text)">Koi video nahi mili</h5>
+			<p style="color:var(--text-muted);font-size:13px">Filter change karo ya refresh karo</p>
+		</div>
+
+	</div>
+
+	<!-- VIDEO DETAIL MODAL -->
+	<div class="modal-overlay" id="videoModal" onclick="if(event.target===this) closeModal()">
+		<div class="modal-box">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h5 class="mb-0" id="modalTitle">Video Detail</h5>
+				<button onclick="closeModal()"
+					style="background:transparent;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1">✕</button>
+			</div>
+			<video id="modalVideo" class="modal-video" controls></video>
+			<div class="mt-3" id="modalInfo"></div>
+			<div class="mt-3 d-flex gap-2" id="modalActions"></div>
+		</div>
+	</div>
+
+	<!-- TOAST CONTAINER -->
+	<div class="toast-box" id="toastBox"></div>
+
+	<!-- DARK MODE TOGGLE -->
+	<button id="darkModeToggle" onclick="toggleDark()" title="Toggle Dark Mode">🌙</button>
+
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-videos.js}"></script>
+	<script>
+		function toggleDark() {
+			document.body.classList.toggle('dark-mode');
+			const d = document.body.classList.contains('dark-mode');
+			localStorage.setItem('adminDarkMode', d);
+			document.getElementById('darkModeToggle').textContent = d ? '☀️' : '🌙';
+		}
+		if (localStorage.getItem('adminDarkMode') === 'true') {
+			document.body.classList.add('dark-mode');
+			const b = document.getElementById('darkModeToggle');
+			if (b) b.textContent = '☀️';
+		}
+	</script>
+</body>
+
+</html>

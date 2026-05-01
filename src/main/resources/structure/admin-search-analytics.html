@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<title>Search Analytics — AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='search-analytics')}"></div>
+	<div class="main-content">
+
+		<h4 class="mb-4">🔍 Search Analytics</h4>
+		<div class="row g-4">
+			<div class="col-md-4">
+				<div class="card shadow-sm p-4">
+					<h6>🔥 Top Search Terms</h6>
+					<div id="topSearches">
+						<div class="text-muted small text-center py-3">Loading...</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="card shadow-sm p-4">
+					<h6>🕐 Recent Searches</h6>
+					<div id="recentSearches">
+						<div class="text-muted small text-center py-3">Loading...</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="card shadow-sm p-4">
+					<h6>📈 Trending Hashtags</h6>
+					<div id="trendingHashtags">
+						<div class="text-muted small text-center py-3">Loading...</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-search-analytics.js}"></script>
+
+	<!-- Dark Mode Toggle -->
+	<button id="darkModeToggle" onclick="toggleDark()" title="Toggle Dark Mode">🌙</button>
+	<script>
+		function toggleDark() {
+			document.body.classList.toggle('dark-mode');
+			const isDark = document.body.classList.contains('dark-mode');
+			localStorage.setItem('adminDarkMode', isDark);
+			document.getElementById('darkModeToggle').textContent = isDark ? '☀️' : '🌙';
+		}
+		// Apply saved preference
+		if (localStorage.getItem('adminDarkMode') === 'true') {
+			document.body.classList.add('dark-mode');
+			const btn = document.getElementById('darkModeToggle');
+			if (btn) btn.textContent = '☀️';
+		}
+	</script>
+</body>
+
+</html>

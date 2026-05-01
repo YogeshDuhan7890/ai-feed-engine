@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<title>Platform Settings - AI Feed Admin</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+<body>
+	<div th:replace="~{components/admin-sidebar :: adminSidebar(activePage='settings')}"></div>
+	<div class="main-content">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<div>
+				<h4 class="mb-0">Platform Settings</h4>
+				<small class="text-muted">Feature flags, limits, maintenance and UI controls</small>
+			</div>
+			<div class="d-flex gap-2">
+				<button class="btn btn-outline-danger btn-sm" onclick="resetSettings()">Reset Defaults</button>
+				<button class="btn btn-primary btn-sm" onclick="saveAll()">Save All</button>
+			</div>
+		</div>
+
+		<div id="settingsAlert" class="alert" style="display:none;"></div>
+		<div class="row g-4" id="settingsContainer">
+			<div class="text-center text-muted py-4">Loading settings...</div>
+		</div>
+	</div>
+
+	<script th:inline="javascript">
+		const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+		const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+	</script>
+	<script th:src="@{/js/admin-settings.js}"></script>
+</body>
+</html>
